@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#071015" />
+  <title>The Idea Zoo: Glassmarket 3D</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="grain" aria-hidden="true"></div>
+
+  <section id="intro" class="intro">
+    <div class="intro-city"></div>
+    <div class="weather-copy">EVERYONE IS FALLING BEHIND</div>
+    <div class="intro-copy">
+      <p class="kicker">Glassmarket · Civic emergency night 24</p>
+      <h1>Ideas have bodies now.<br><em>You carry the keys.</em></h1>
+      <p class="lede">Enter a living 3D Glassmarket. Drive to Open Market, investigate The Honest Crown, contain it without feeding its appetite, and bring it before the Zoo.</p>
+      <button id="startBtn" class="primary large">Enter Glassmarket</button>
+      <p class="controls-note">Desktop: WASD move · mouse look · E interact/enter vehicle · Space use tool · 1–4 choose tool · Q siren. Touch controls appear on mobile.</p>
+    </div>
+  </section>
+
+  <main id="gameShell" class="game-shell hidden">
+    <canvas id="glCanvas" aria-label="3D Glassmarket game"></canvas>
+
+    <header class="hud-top">
+      <div class="brand"><span class="seal">IZ</span><div><strong>The Idea Zoo</strong><small>Keeper Unit Seven · 3D field build</small></div></div>
+      <div class="hud-meters">
+        <div class="meter"><span>City stability</span><b id="stabilityVal">74</b><i><em id="stabilityBar"></em></i></div>
+        <div class="meter"><span>Public trust</span><b id="trustVal">61</b><i><em id="trustBar"></em></i></div>
+        <div class="meter violet"><span>Story leakage</span><b id="leakVal">9</b><i><em id="leakBar"></em></i></div>
+        <div class="meter red"><span>Agitation</span><b id="agitationVal">38</b><i><em id="agitationBar"></em></i></div>
+      </div>
+      <button id="soundBtn" class="round" aria-label="Toggle sound">♪</button>
+    </header>
+
+    <div class="weather-banner">THE FUTURE IS ARRIVING</div>
+    <div class="crosshair" aria-hidden="true"></div>
+
+    <section id="missionCard" class="mission-card">
+      <span id="missionTag">DISPATCH</span>
+      <strong id="missionTitle">Possible predator manifestation</strong>
+      <p id="missionText">Take Keeper Unit Seven to Open Market.</p>
+    </section>
+
+    <div id="radio" class="radio hidden">
+      <span class="radio-light"></span>
+      <div><small id="radioSpeaker">CONTROL</small><p id="radioText"></p></div>
+    </div>
+
+    <div id="prompt" class="prompt hidden">Press E to interact</div>
+
+    <div class="tool-belt" id="toolBelt">
+      <button data-tool="praise"><kbd>1</kbd><span>Praise</span></button>
+      <button data-tool="money"><kbd>2</kbd><span>Money</span></button>
+      <button data-tool="enemy"><kbd>3</kbd><span>Enemy</span></button>
+      <button data-tool="silence" class="selected"><kbd>4</kbd><span>Silence</span></button>
+    </div>
+
+    <aside class="casebook" id="casebook">
+      <header><span>CASE 24-071</span><button id="caseToggle" aria-label="Close casebook">×</button></header>
+      <h2>The Honest Crown</h2>
+      <p class="claim">“A crown that reveals whether its wearer is lying.”</p>
+      <div class="facts">
+        <div class="fact locked" data-fact="first"><b>First action</b><span>Find the inventor.</span></div>
+        <div class="fact locked" data-fact="appetite"><b>Appetite</b><span>Unknown.</span></div>
+        <div class="fact locked" data-fact="counter"><b>Counterfactual</b><span>Unknown.</span></div>
+        <div class="fact locked" data-fact="consent"><b>Consent test</b><span>Unknown.</span></div>
+      </div>
+      <div class="classification"><span>Working classification</span><strong id="classText">UNCONFIRMED</strong></div>
+    </aside>
+
+    <div class="minimap-wrap"><canvas id="minimap" width="250" height="170"></canvas><span>GLASSMARKET</span></div>
+
+    <div class="interaction-log" id="interactionLog"><p>CONTROL: Manifestation clock is active.</p></div>
+
+    <div id="touchControls" class="touch-controls">
+      <div id="moveStick" class="stick"><i></i></div>
+      <div id="lookPad" class="look-pad"></div>
+      <div class="touch-actions"><button id="touchInteract">E</button><button id="touchTool">TOOL</button></div>
+    </div>
+  </main>
+
+  <section id="verdictModal" class="modal hidden" role="dialog" aria-modal="true">
+    <div class="verdict-card">
+      <p class="kicker">The Idea Zoo · Dawn hearing</p>
+      <h2>The creature is contained. The judgment is not.</h2>
+      <div class="specimen-hero" id="specimenHero"></div>
+      <p class="verdict-brief">The lion does not detect lies. It detects conflict between speech and belief. A fanatic who believes something false can stand beside it in perfect silence.</p>
+      <div class="verdict-options">
+        <button data-verdict="release"><b>One bell</b><strong>Release</strong><span>Truth belongs in public.</span></button>
+        <button data-verdict="restrict"><b>Two bells</b><strong>Restricted release</strong><span>Voluntary investigations only.</span></button>
+        <button data-verdict="molt"><b>Three bells</b><strong>Return for molting</strong><span>Add consent, appeal and visible appetite.</span></button>
+        <button data-verdict="sanctuary"><b>Four bells</b><strong>Permanent sanctuary</strong><span>Keep it alive, keep it contained.</span></button>
+        <button data-verdict="destroy"><b>Five bells</b><strong>Destroy the original</strong><span>Accept the risk of stories escaping.</span></button>
+      </div>
+    </div>
+  </section>
+
+  <section id="ending" class="modal hidden">
+    <div class="ending-card">
+      <p class="kicker">Glassmarket morning edition</p>
+      <h2 id="endingTitle"></h2>
+      <p id="endingText" class="ending-copy"></p>
+      <div class="ending-grid">
+        <div><span>City stability</span><strong id="endStability"></strong></div>
+        <div><span>Public trust</span><strong id="endTrust"></strong></div>
+        <div><span>Story leakage</span><strong id="endLeak"></strong></div>
+        <div><span>Field rank</span><strong id="endRank"></strong></div>
+      </div>
+      <div id="endingTwist" class="twist"></div>
+      <button class="primary" onclick="location.reload()">Run another night</button>
+    </div>
+  </section>
+
+  <div id="runtimeError" class="runtime-error hidden"></div>
+  <script src="engine.js"></script>
+  <script src="world.js"></script>
+  <script src="gameplay.js"></script>
+  <script src="ui.js"></script>
+</body>
+</html>

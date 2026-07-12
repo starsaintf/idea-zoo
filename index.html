@@ -1,13 +1,70 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>The Idea Zoo</title>
-<link rel="stylesheet" href="style.css"></head><body><div class="grain"></div><div class="weatherFX" id="weatherFX"></div>
-<header class="top"><div class="brand"><i>◉</i><span><strong>The Idea Zoo</strong><small>Glassmarket civic institution no. 24</small></span></div><div><button class="ghost" id="sound">Sound off</button> <button class="ghost" id="restartTop">Restart</button></div></header>
-<section class="hero" id="hero"><div class="moon"></div><div class="weatherword">EVERYONE IS FALLING BEHIND</div><div class="sky"></div><div class="dome"></div><div class="heroCopy"><div class="eyebrow">Glassmarket · 23:41</div><h1>Every idea becomes a creature after twenty-four hours.</h1><p class="lede">The city learned to produce ideas faster than it learned to judge them. Tonight, yours is due to hatch.</p><button class="primary" id="enter">Enter through the Whisper Gate</button></div></section>
-<div class="game hidden" id="game"><aside class="route"><div class="case">CASE <span id="caseNo">08-441</span></div><ol id="route"><li class="active" data-s="intake"><b>01</b>Whisper Gate</li><li data-s="hatch"><b>02</b>Hatchery</li><li data-s="yard"><b>03</b>Behaviour Yard</li><li data-s="molt"><b>04</b>Molt House</li><li data-s="arena"><b>05</b>Civic Arena</li><li data-s="verdict"><b>06</b>Verdict</li></ol><div class="motto">WE MAY BE WRONG.<strong>THE LOCKS ARE STILL REAL.</strong></div></aside><main>
-<section class="stage active" data-stage="intake"><div class="head"><div><div class="eyebrow">Room 01 · The Whisper Gate</div><h2>Say the idea without selling it.</h2></div><div class="clock"><span>Time until manifestation</span><strong id="clock">00:18:32</strong></div></div><form class="card intake" id="form"><label class="cap">What is the idea?</label><textarea id="idea" required maxlength="280" placeholder="A crown that reveals whether its wearer is lying"></textarea><div class="count"><span id="chars">0</span>/280</div><div class="questions"><label><span>What does it promise?</span><input id="promise" required placeholder="The visible benefit"></label><label><span>Who cannot easily refuse it?</span><input id="refuse" required placeholder="The person with least power"></label><label><span>What might it secretly eat?</span><select id="appetite" required><option value="">Choose an appetite</option><option>attention</option><option>privacy</option><option>obedience</option><option>money</option><option>fear</option><option>status</option><option>time</option><option>care</option></select></label><label><span>What happens when ten million people use it badly?</span><input id="misuse" required placeholder="The ugly second-order effect"></label></div><div class="foot"><p id="smoke">Promotional language produces yellow smoke.</p><button class="primary">Seal the incubation cell</button></div></form></section>
-<section class="stage" data-stage="hatch"><div class="head"><div><div class="eyebrow">Room 02 · The Hatchery</div><h2>The first action is more honest than the inventor.</h2></div></div><div class="hatchgrid"><div class="cell"><canvas id="creature" width="820" height="600"></canvas><div class="celltag"><span id="specimen">Unnamed specimen</span><strong id="classLabel">CLASSIFICATION PENDING</strong></div></div><aside class="card obs"><div class="eyebrow">Initial observation</div><h3 id="firstAction">The specimen is listening.</h3><p id="desc"></p><dl><div><dt>Body</dt><dd id="body">—</dd></div><div><dt>Primary appetite</dt><dd id="appetiteOut">—</dd></div><div><dt>Breeding pattern</dt><dd id="breeding">—</dd></div><div><dt>Escape risk</dt><dd id="risk">—</dd></div></dl><button class="primary" id="toYard">Begin behaviour tests</button></aside></div></section>
-<section class="stage" data-stage="yard"><div class="head"><div><div class="eyebrow">Room 03 · The Behaviour Yard</div><h2>Offer it what changes people.</h2></div><p class="note">Run three tests. The specimen remembers all of them.</p></div><div class="yard"><div class="tests"><button class="test" data-test="praise"><strong>Praise</strong><small>Tell it the city loves it.</small></button><button class="test" data-test="money"><strong>Money</strong><small>Give it a way to scale.</small></button><button class="test" data-test="resistance"><strong>Resistance</strong><small>Have citizens refuse.</small></button><button class="test" data-test="enemy"><strong>An enemy</strong><small>Give it something to blame.</small></button><button class="test" data-test="silence"><strong>Silence</strong><small>Starve it of attention.</small></button></div><div><div class="frame"><canvas id="yardCanvas" width="760" height="430"></canvas></div><div class="log" id="log"><p>No test has been run.</p></div><div class="stats"><label>Usefulness <span id="usefulnessV">50</span><i><b id="usefulnessB"></b></i></label><label>Appetite <span id="appetiteV">50</span><i><b id="appetiteB"></b></i></label><label>Contagion <span id="contagionV">50</span><i><b id="contagionB"></b></i></label><label>Control <span id="controlV">50</span><i><b id="controlB"></b></i></label><label>Mutation <span id="mutationV">50</span><i><b id="mutationB"></b></i></label></div><button class="primary" id="toMolt" disabled>Move to the Molt House</button></div></div></section>
-<section class="stage" data-stage="molt"><div class="head"><div><div class="eyebrow">Room 04 · The Molt House</div><h2>Change the rules around the creature.</h2></div><p class="note">Choose up to three interventions. Every improvement costs something.</p></div><div class="moltgrid"><div class="table"><canvas id="moltCanvas" width="780" height="520"></canvas><div class="remain">INTERVENTIONS REMAINING: <strong id="remain">3</strong></div></div><div class="interventions"><button class="intervention" data-fix="consent"><strong>Add an exit</strong><span>Anyone affected may refuse or leave.</span><em>Control ↑ · Usefulness ↓</em></button><button class="intervention" data-fix="transparency"><strong>Expose the appetite</strong><span>Show citizens exactly what it consumes.</span><em>Control ↑ · Contagion ↓</em></button><button class="intervention" data-fix="limit"><strong>Limit its territory</strong><span>Restrict where and for whom it may operate.</span><em>Mutation ↓ · Usefulness ↓</em></button><button class="intervention" data-fix="appeal"><strong>Add a right of appeal</strong><span>Its decisions may be challenged.</span><em>Control ↑ · Appetite ↓</em></button><button class="intervention" data-fix="ownership"><strong>Break the single leash</strong><span>No one actor may fully control it.</span><em>Control ↑ · Mutation ↑</em></button><button class="intervention" data-fix="maintenance"><strong>Name the keeper</strong><span>Someone must repair, audit and clean up after it.</span><em>Usefulness ↑ · Appetite ↓</em></button></div></div><div class="right"><button class="primary" id="toArena">Run the ten-year simulation</button></div></section>
-<section class="stage" data-stage="arena"><div class="head"><div><div class="eyebrow">Room 05 · The Civic Arena</div><h2>Ten years of consequences in ninety seconds.</h2></div></div><div class="map" id="map"><div class="district d1"><span>High Glass</span></div><div class="district d2"><span>Open Market</span></div><div class="district d3"><span>School Quarter</span></div><div class="district d4"><span>Low Harbour</span></div><div class="district d5"><span>Public Works</span></div><div class="token" id="token"></div><div class="year">YEAR <strong id="year">0</strong></div></div><div class="reportrow"><div class="report" id="report"></div><button class="primary" id="simulate">Start simulation</button></div></section>
-<section class="stage" data-stage="verdict"><div class="verdictgrid"><div><div class="eyebrow">Final ruling · Five bells</div><h2 id="verdictTitle">Awaiting judgment</h2><p class="verdictcopy" id="verdictCopy"></p><div class="stamp" id="stamp">PENDING</div><div class="plate"><div><span>What it does</span><strong id="plateDoes">—</strong></div><div><span>Who benefits</span><strong id="plateBenefit">—</strong></div><div><span>Who feeds it</span><strong id="plateFeed">—</strong></div><div><span>Who cleans up</span><strong id="plateClean">—</strong></div><div><span>If it escapes</span><strong id="plateEscape">—</strong></div></div><div class="actions"><button class="ghost" id="print">Print creature record</button><button class="primary" id="again">Bring another idea</button></div></div><div><div class="portrait"><canvas id="verdictCanvas" width="700" height="700"></canvas></div><div class="caption"><strong id="finalName">Specimen</strong><span id="finalClass">Unclassified</span></div></div></div></section>
-</main></div><footer>Glassmarket records every idea twice: once as promised, once as released.</footer>
-<script src="game.js"></script><noscript><div style="position:fixed;inset:0;z-index:999;background:#090d10;color:#e9e1cf;padding:32px;font:20px Georgia">The gates cannot open because JavaScript is disabled.</div></noscript><div id="runtimeError" hidden style="position:fixed;inset:18px;z-index:1000;background:#240d0d;color:#fff;border:1px solid #b9584f;padding:24px;overflow:auto;font-family:monospace"></div></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#071015" />
+  <title>The Idea Zoo: First Response</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="grain" aria-hidden="true"></div>
+
+  <section id="intro" class="intro">
+    <div class="intro-city"></div>
+    <div class="intro-weather">EVERYONE IS FALLING BEHIND</div>
+    <div class="intro-copy">
+      <p class="kicker">Glassmarket · Civic emergency night 24</p>
+      <h1>You are the person sent in when an idea grows a body.</h1>
+      <p class="lede">Drive the wet streets. Read the appetite. Catch the creature alive. Then decide whether the city has to live with it.</p>
+      <button id="startBtn" class="primary large">Take Keeper Unit Seven</button>
+      <p class="controls-note">Desktop: WASD / arrows · E interact · Space use tool · 1–4 choose lure. Mobile controls appear in-game.</p>
+    </div>
+  </section>
+
+  <main id="shell" class="shell hidden">
+    <header class="hud-top">
+      <div class="brand">
+        <span class="seal">IZ</span>
+        <div><strong>The Idea Zoo</strong><small>First Response · Keeper Unit Seven</small></div>
+      </div>
+      <div class="hud-meters">
+        <div class="meter"><span>City stability</span><b id="stabilityVal">74</b><i><em id="stabilityBar"></em></i></div>
+        <div class="meter"><span>Public trust</span><b id="trustVal">61</b><i><em id="trustBar"></em></i></div>
+        <div class="meter violet"><span>Story leakage</span><b id="leakVal">9</b><i><em id="leakBar"></em></i></div>
+        <div class="meter red"><span>Creature agitation</span><b id="agitationVal">38</b><i><em id="agitationBar"></em></i></div>
+      </div>
+      <button id="soundBtn" class="round" aria-label="Toggle sound">♪</button>
+    </header>
+
+    <section class="playfield">
+      <canvas id="game" width="1280" height="720" aria-label="Playable Glassmarket city"></canvas>
+      <div id="missionCard" class="mission-card"><span id="missionTag">DISPATCH</span><strong id="missionTitle">Possible predator manifestation</strong><p id="missionText">Reach Open Market. Civilian inventor remains on scene.</p></div>
+      <div id="radio" class="radio hidden"><span class="radio-light"></span><div><small id="radioSpeaker">CONTROL</small><p id="radioText"></p></div></div>
+      <div id="prompt" class="prompt hidden">Press E to interact</div>
+      <div class="tool-belt" id="toolBelt">
+        <button data-tool="praise"><kbd>1</kbd><span>Praise</span></button><button data-tool="money"><kbd>2</kbd><span>Money</span></button><button data-tool="enemy"><kbd>3</kbd><span>Enemy</span></button><button data-tool="silence" class="selected"><kbd>4</kbd><span>Silence</span></button>
+      </div>
+      <aside class="casebook" id="casebook">
+        <header><span>CASE 24-071</span><button id="caseToggle">×</button></header><h2>The Honest Crown</h2><p class="claim">“A crown that reveals whether its wearer is lying.”</p>
+        <div class="facts" id="facts"><div class="fact locked" data-fact="first"><b>First action</b><span>Find the inventor.</span></div><div class="fact locked" data-fact="appetite"><b>Appetite</b><span>Unknown.</span></div><div class="fact locked" data-fact="counter"><b>Counterfactual</b><span>Unknown.</span></div><div class="fact locked" data-fact="consent"><b>Consent test</b><span>Unknown.</span></div></div>
+        <div class="classification"><span>Working classification</span><strong id="classText">UNCONFIRMED</strong></div>
+      </aside>
+      <div class="minimap-wrap"><canvas id="minimap" width="230" height="150"></canvas><span>GLASSMARKET</span></div>
+      <div id="touchControls" class="touch-controls"><div id="stick" class="stick"><i></i></div><div class="touch-actions"><button id="touchInteract">E</button><button id="touchTool">TOOL</button></div></div>
+    </section>
+  </main>
+
+  <section id="verdictModal" class="modal hidden" role="dialog" aria-modal="true">
+    <div class="verdict-card"><p class="kicker">The Idea Zoo · Dawn hearing</p><h2>The creature is contained. The judgment is not.</h2><div class="verdict-layout">
+      <div class="specimen-panel"><canvas id="specimenCanvas" width="560" height="440"></canvas><div><strong>The Honest Crown</strong><span>Mirror–Teeth hybrid · Appetite: certainty</span></div></div>
+      <div><p id="verdictBrief" class="verdict-brief">The lion does not detect lies. It detects conflict between speech and belief. A fanatic who believes something false can stand beside it in perfect silence.</p><div class="verdict-options">
+        <button data-verdict="release"><b>One bell</b><strong>Release</strong><span>Truth belongs in public.</span></button><button data-verdict="restrict"><b>Two bells</b><strong>Restricted release</strong><span>Voluntary investigations only.</span></button><button data-verdict="molt"><b>Three bells</b><strong>Return for molting</strong><span>Add consent, appeal and a visible appetite.</span></button><button data-verdict="sanctuary"><b>Four bells</b><strong>Permanent sanctuary</strong><span>Keep it alive, keep it contained.</span></button><button data-verdict="destroy"><b>Five bells</b><strong>Destroy the original</strong><span>Accept the risk of stories escaping.</span></button>
+      </div></div>
+    </div></div>
+  </section>
+
+  <section id="ending" class="modal hidden"><div class="ending-card"><p class="kicker">Glassmarket morning edition</p><h2 id="endingTitle"></h2><p id="endingText" class="ending-copy"></p><div class="ending-grid"><div><span>City stability</span><strong id="endStability"></strong></div><div><span>Public trust</span><strong id="endTrust"></strong></div><div><span>Story leakage</span><strong id="endLeak"></strong></div><div><span>Field rank</span><strong id="endRank"></strong></div></div><div id="endingTwist" class="twist"></div><button class="primary" onclick="location.reload()">Run another night</button></div></section>
+  <script src="game.js"></script>
+</body>
+</html>

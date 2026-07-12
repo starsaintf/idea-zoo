@@ -1,0 +1,7 @@
+st len=Math.hypot(dx,dy)||1,max=38;const m=Math.min(max,len);touchVec.x=dx/len*(m/max);touchVec.y=dy/len*(m/max);nub.style.transform=`translate(${touchVec.x*30}px,${touchVec.y*30}px)`;}
+  stick.addEventListener('touchstart',e=>{const t=e.changedTouches[0];stickId=t.identifier;const r=stick.getBoundingClientRect();origin={x:r.left+r.width/2,y:r.top+r.height/2};stickMove(e);e.preventDefault();},{passive:false});
+  stick.addEventListener('touchmove',e=>{stickMove(e);e.preventDefault();},{passive:false});
+  stick.addEventListener('touchend',e=>{if([...e.changedTouches].some(t=>t.identifier===stickId)){stickId=null;touchVec={x:0,y:0};nub.style.transform='';}},{passive:false});
+
+  setupWorld();
+})();

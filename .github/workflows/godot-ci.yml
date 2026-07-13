@@ -1,5 +1,8 @@
 name: Godot project validation
 
+permissions:
+  contents: write
+
 on:
   pull_request:
     paths:
@@ -38,3 +41,19 @@ jobs:
         with:
           name: idea-zoo-godot-web
           path: godot/build/web
+
+      - name: Publish playable preview branch
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cd godot/build/web
+          touch .nojekyll
+          git init
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b godot-preview
+          git add .
+          git commit -m "Publish Godot mobile preview"
+          git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git push --force origin godot-preview

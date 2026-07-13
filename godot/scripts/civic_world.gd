@@ -438,13 +438,13 @@ func update_classification_board(scores: Dictionary, official_class: String, cor
 	var highest = 1.0
 	for value in scores.values():
 		highest = max(highest, float(value))
-	for class_name in classification_bars.keys():
-		var holder = classification_bars[class_name] as Node3D
-		var score = float(scores.get(class_name, 0.0))
+	for class_key in classification_bars.keys():
+		var holder = classification_bars[class_key] as Node3D
+		var score = float(scores.get(class_key, 0.0))
 		holder.scale.x = max(0.06, score / highest * 22.0)
 		holder.position.x = -0.4 + holder.scale.x * 0.075
 		var mesh = holder.get_child(0) as MeshInstance3D
-		mesh.material_override = material(color_rust if class_name == official_class and not corruption_exposed else color_glass, 0.7)
+		mesh.material_override = material(color_rust if class_key == official_class and not corruption_exposed else color_glass, 0.7)
 	var official = classification_root.get_node_or_null("OfficialLabel") as Label3D
 	if official != null:
 		official.text = ("CONFLICT DISCLOSED · OBSERVED: " if corruption_exposed else "BOARD CLASSIFICATION: ") + official_class

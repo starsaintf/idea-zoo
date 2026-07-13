@@ -44,8 +44,8 @@ var ending_chosen = false
 func _ready():
 	_ensure_input_actions()
 	_load_archive()
-	for class_name in classes:
-		classification_scores[class_name] = 0.0
+	for class_key in classes:
+		classification_scores[class_key] = 0.0
 	Engine.max_fps = 60
 	if OS.has_feature("mobile"):
 		get_viewport().scaling_3d_scale = 0.72
@@ -310,8 +310,8 @@ func _consult_staff(index: int):
 	staff_bells -= 1
 	reports_read += 1
 	hud.set_bells(staff_bells, true)
-	for class_name in report["votes"].keys():
-		classification_scores[class_name] = float(classification_scores.get(class_name, 0.0)) + float(report["votes"][class_name])
+	for class_key in report["votes"].keys():
+		classification_scores[class_key] = float(classification_scores.get(class_key, 0.0)) + float(report["votes"][class_key])
 	integrity = clamp(integrity + float(report["integrity"]), 0.0, 100.0)
 	trust = clamp(trust + float(report["trust"]), 0.0, 100.0)
 	leakage = clamp(leakage + float(report["leakage"]), 0.0, 100.0)
@@ -395,11 +395,11 @@ func _display_scores() -> Dictionary:
 func _evidence_leader() -> String:
 	var leader = "HAND"
 	var highest = -999.0
-	for class_name in classes:
-		var value = float(classification_scores.get(class_name, 0.0))
+	for class_key in classes:
+		var value = float(classification_scores.get(class_key, 0.0))
 		if value > highest:
 			highest = value
-			leader = class_name
+			leader = class_key
 	return leader
 
 func _choose_verdict(verdict: String):

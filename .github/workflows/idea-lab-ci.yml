@@ -46,9 +46,15 @@ jobs:
         working-directory: godot
         run: |
           mkdir -p build
-          IDEA_ZOO_MOBILE_TEST=1 xvfb-run -a /tmp/godot/Godot_v4.7-stable_linux.x86_64 --resolution 896x414 --path . --script res://tests/idea_lab_contract.gd
+          set +e
+          IDEA_ZOO_MOBILE_TEST=1 xvfb-run -a /tmp/godot/Godot_v4.7-stable_linux.x86_64 --resolution 896x414 --path . --script res://tests/idea_lab_contract.gd 2>&1 | tee build/idea-lab-contract.log
+          status=${PIPESTATUS[0]}
+          echo "Contract exit status: ${status}"
+          tail -n 120 build/idea-lab-contract.log
+          exit "${status}"
 
-      - name: Upload chapter evidence
+      - name: Upload chapter evidence and diagnostics
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: idea-lab-contract
@@ -56,7 +62,10 @@ jobs:
             godot/build/idea-lab-contract.json
             godot/build/idea-lab-contract.png
             godot/build/idea-lab-world.png
-          if-no-files-found: error
+            godot/build/idea-lab-contract.log
+            /tmp/idea-lab-parse.log
+            /tmp/idea-lab-runtime.log
+          if-no-files-found: warn
 
       - name: Export mobile Web build
         working-directory: godot
@@ -82,6 +91,6 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -b idea-lab-preview
           git add .
-          git commit -m "Publish real-world Idea Zoo laboratory"
+          git commit -m "Publish stabilized real-world Idea Zoo laboratory"
           git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
           git push --force origin idea-lab-preview

@@ -19,6 +19,15 @@ The player:
 
 The correct containment is not a quiz answer. The clues reveal three necessary rules: an exit, a named keeper and a boundary. An `AMPLIFY` seal rewards speed while making the creature less governable.
 
+
+## Institutional expansion
+
+After field containment, the case opens into the full Idea Zoo rather than ending at a verdict menu. The player physically enters the departments, has four bell-hours to consult eight specialists, studies the seven living classes, and decides whether to spend scarce time uncovering a sealed board conflict.
+
+The playable ecology now includes Flecks, Hands, Mirrors, Teeth, Swarms, Weather and Burrowers. Each behaves differently in the city and responds to stability and story leakage. Staff reports push the official classification in competing directions; the board can still override the keeper when its funding conflict remains hidden.
+
+The replay loop is built around fast evidence chains, taxonomy discoveries, limited consultations, classification risk, persistent best score and keeper ranks. Rewards come from noticing incentives and second-order effects—not from skipping the intellectual work.
+
 ## Identity pillars
 
 - **Civic surrealism:** institutions, incentives and maintenance become physical geography.

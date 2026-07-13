@@ -28,6 +28,7 @@ func _build_creature():
 	collision.shape = sphere
 	collision.position.y = 1.0
 	add_child(collision)
+
 	body_root = Node3D.new()
 	add_child(body_root)
 	for i in range(12):
@@ -51,6 +52,7 @@ func _build_creature():
 	head.material_override = _glow_material(Color("#b85a50"), 0.65)
 	body_root.add_child(head)
 	segments.push_front(head)
+
 	for side in [-1.0, 1.0]:
 		var eye = MeshInstance3D.new()
 		var eye_mesh = SphereMesh.new()
@@ -60,6 +62,7 @@ func _build_creature():
 		eye.position = Vector3(side * 0.34, 1.28, -1.4)
 		eye.material_override = _glow_material(Color("#7de0d3"), 2.1)
 		body_root.add_child(eye)
+
 	name_label = Label3D.new()
 	name_label.text = "THE QUEUE-EATER"
 	name_label.font_size = 44
@@ -139,7 +142,11 @@ func _animate_body():
 		var segment = segments[i] as MeshInstance3D
 		var depth = float(i) * 0.66
 		var energy = 0.35 + agitation / 100.0
-		segment.position = Vector3(sin(time * 3.2 - i * 0.55) * energy, 0.85 + sin(time * 4.0 - i * 0.34) * 0.14, depth)
+		segment.position = Vector3(
+			sin(time * 3.2 - i * 0.55) * energy,
+			0.85 + sin(time * 4.0 - i * 0.34) * 0.14,
+			depth
+		)
 		segment.rotation.y = sin(time * 2.4 - i * 0.4) * 0.22
 		segment.rotation.z = sin(time * 3.1 - i * 0.3) * 0.08
 
@@ -151,3 +158,23 @@ func _update_colors():
 			mat.albedo_color = Color("#87b3a1") if i % 2 == 0 else Color("#d2a45f")
 		else:
 			mat.albedo_color = Color("#d8cdb7") if i % 2 == 0 else Color("#a6574e")
+
+func set_classification(keeper_class: String, board_class: String):
+	name_label.text = "KEEPER: %s · BOARD: %s" % [keeper_class, board_class]
+	var palette = {
+		"FLECK": Color("#d7c780"),
+		"HAND": Color("#7f9f79"),
+		"MIRROR": Color("#79b0b4"),
+		"TEETH": Color("#a6574e"),
+		"SWARM": Color("#aa87b2"),
+		"WEATHER": Color("#8e7ba0"),
+		"BURROWER": Color("#7f8883")
+	}
+	var chosen = palette.get(keeper_class, Color("#d2a45f"))
+	for i in range(segment_materials.size()):
+		var mat = segment_materials[i] as StandardMaterial3D
+		mat.albedo_color = chosen.lightened(0.12) if i % 2 == 0 else chosen.darkened(0.12)
+	if keeper_class != board_class:
+		name_label.modulate = Color("#d46458")
+	else:
+		name_label.modulate = Color("#d2a45f")

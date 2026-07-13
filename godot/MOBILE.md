@@ -33,3 +33,9 @@ Future districts should be compact hubs connected by surreal civic transit, not 
 - verify safe areas and gesture navigation overlap;
 - profile low-memory background/resume behaviour;
 - add graphics presets for 30/60 FPS and 0.65/0.8/1.0 render scale.
+
+## Session loop
+
+The target mobile session is 8–12 minutes: trace, contain, escort, spend four bell-hours, classify, judge, then immediately replay for a better archive score or a different institutional route. Evidence chains expire quickly enough to encourage movement, while all major decisions remain untimed so the player can think.
+
+The top HUD compresses on touch devices. Reports appear as temporary side cards instead of repeatedly stopping movement, while only major phase changes use full-screen records.

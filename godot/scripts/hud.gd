@@ -47,7 +47,7 @@ var diagnostics_label: Label
 var is_touch = false
 
 func _ready():
-	is_touch = DisplayServer.is_touchscreen_available() or OS.has_feature("mobile")
+	is_touch = DisplayServer.is_touchscreen_available() or OS.has_feature("mobile") or OS.has_environment("IDEA_ZOO_MOBILE_TEST")
 	_build_top_ledger()
 	_build_prompt()
 	_build_message()

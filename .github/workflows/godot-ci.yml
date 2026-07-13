@@ -18,22 +18,175 @@ jobs:
         with:
           ref: ${{ github.head_ref || github.ref_name }}
 
-      - name: Apply staged mobile optimization
+      - name: Apply sustained-performance controller
         if: github.event_name == 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
           BRANCH: ${{ github.head_ref }}
         run: |
-          if [ -d godot/.mobile_fix_parts ]; then
-            cat godot/.mobile_fix_parts/* | tr -d '[:space:]' > /tmp/mobile-fix.b64
-            base64 -d /tmp/mobile-fix.b64 > /tmp/mobile-fix.tgz
-            echo "f993aecebe3e246378158ef2b497bd62e7235e4fa916a11068a4aaa16aa5273f  /tmp/mobile-fix.tgz" | sha256sum -c -
-            tar -xzf /tmp/mobile-fix.tgz -C godot
-            rm -rf godot/.mobile_fix_parts
+          if ! grep -q 'var mobile_runtime = false' godot/scripts/main.gd; then
+            python3 - <<'PY'
+          from pathlib import Path
+          path = Path('godot/scripts/main.gd')
+          text = path.read_text()
+          variables = '''
+          var mobile_runtime = false
+          var performance_profiles = [
+          \t{"label": "ECO 30", "fps": 30, "start": 0.62, "min": 0.54, "max": 0.68},
+          \t{"label": "BAL 45", "fps": 45, "start": 0.70, "min": 0.60, "max": 0.78},
+          \t{"label": "QUALITY 60", "fps": 60, "start": 0.80, "min": 0.70, "max": 0.90}
+          ]
+          var performance_profile_index = 2
+          var current_render_scale = 0.80
+          var performance_sample_time = 0.0
+          var low_fps_streak = 0
+          var high_fps_streak = 0
+          var diagnostics_active = false
+          var diagnostics_elapsed = 0.0
+          var diagnostics_sample_time = 0.0
+          var diagnostics_samples = []
+          var diagnostics_duration = 600.0
+          '''.replace('\n          ', '\n').lstrip('\n')
+          text = text.replace('var ending_chosen = false\n', 'var ending_chosen = false\n\n' + variables, 1)
+          text = text.replace('''\tfor class_key in classes:
+          \t\tclassification_scores[class_key] = 0.0
+          \tEngine.max_fps = 60
+          \tif OS.has_feature("mobile"):
+          \t\tget_viewport().scaling_3d_scale = 0.72
+          ''', '''\tfor class_key in classes:
+          \t\tclassification_scores[class_key] = 0.0
+          \tmobile_runtime = OS.has_feature("mobile") or DisplayServer.is_touchscreen_available()
+          '''.replace('\n          ', '\n'))
+          text = text.replace('''\thud.lens_changed.connect(player.set_lens)
+          \thud.joystick_changed.connect(player.set_mobile_vector)
+          
+          \thud.set_seal''', '''\thud.lens_changed.connect(player.set_lens)
+          \thud.joystick_changed.connect(player.set_mobile_vector)
+          \thud.performance_pressed.connect(_cycle_performance_profile)
+          \thud.diagnostics_pressed.connect(_toggle_diagnostics)
+          \tperformance_profile_index = 0 if mobile_runtime else 2
+          \t_apply_performance_profile(performance_profile_index)
+          
+          \thud.set_seal'''.replace('\n          ', '\n'))
+          text = text.replace('func _process(delta):\n', 'func _process(delta):\n\t_update_performance(delta)\n', 1)
+          path.write_text(text)
+          PY
+            cat >> godot/scripts/main.gd <<'GDSCRIPT'
+
+          func _cycle_performance_profile():
+          	performance_profile_index = (performance_profile_index + 1) % performance_profiles.size()
+          	_apply_performance_profile(performance_profile_index)
+          	if mobile_runtime:
+          		Input.vibrate_handheld(18)
+
+          func _apply_performance_profile(index: int):
+          	var profile = performance_profiles[index]
+          	Engine.max_fps = int(profile["fps"])
+          	current_render_scale = float(profile["start"])
+          	get_viewport().scaling_3d_scale = current_render_scale
+          	low_fps_streak = 0
+          	high_fps_streak = 0
+          	if hud != null:
+          		hud.set_performance_mode(String(profile["label"]))
+
+          func _update_performance(delta: float):
+          	performance_sample_time += delta
+          	diagnostics_sample_time += delta
+          	if performance_sample_time >= 2.0:
+          		performance_sample_time = 0.0
+          		var profile = performance_profiles[performance_profile_index]
+          		var target_fps = float(profile["fps"])
+          		var measured_fps = float(Engine.get_frames_per_second())
+          		if measured_fps < target_fps * 0.82:
+          			low_fps_streak += 1
+          			high_fps_streak = 0
+          		elif measured_fps > target_fps * 0.96:
+          			high_fps_streak += 1
+          			low_fps_streak = 0
+          		else:
+          			low_fps_streak = max(0, low_fps_streak - 1)
+          			high_fps_streak = max(0, high_fps_streak - 1)
+          		if low_fps_streak >= 2 and current_render_scale > float(profile["min"]):
+          			current_render_scale = max(float(profile["min"]), current_render_scale - 0.04)
+          			get_viewport().scaling_3d_scale = current_render_scale
+          			low_fps_streak = 0
+          		elif high_fps_streak >= 5 and current_render_scale < float(profile["max"]):
+          			current_render_scale = min(float(profile["max"]), current_render_scale + 0.02)
+          			get_viewport().scaling_3d_scale = current_render_scale
+          			high_fps_streak = 0
+          	if diagnostics_active:
+          		diagnostics_elapsed += delta
+          		if diagnostics_sample_time >= 1.0:
+          			diagnostics_sample_time = 0.0
+          			diagnostics_samples.append(float(Engine.get_frames_per_second()))
+          			if diagnostics_samples.size() > int(diagnostics_duration):
+          				diagnostics_samples.pop_front()
+          			_update_diagnostics_hud()
+          		if diagnostics_elapsed >= diagnostics_duration:
+          			_finish_diagnostics()
+
+          func _toggle_diagnostics():
+          	if diagnostics_active:
+          		_finish_diagnostics()
+          	else:
+          		diagnostics_active = true
+          		diagnostics_elapsed = 0.0
+          		diagnostics_sample_time = 0.0
+          		diagnostics_samples.clear()
+          		hud.set_diagnostics("DEVICE TEST · 00:00 / 10:00\nPlay normally. FPS, scale and sustained drop are being measured.", true)
+
+          func _update_diagnostics_hud():
+          	if diagnostics_samples.is_empty():
+          		return
+          	var average = _average_slice(diagnostics_samples, 0, diagnostics_samples.size())
+          	var ordered = diagnostics_samples.duplicate()
+          	ordered.sort()
+          	var low_index = int(floor(float(ordered.size() - 1) * 0.05))
+          	var low_fps = float(ordered[low_index])
+          	var first_count = min(60, diagnostics_samples.size())
+          	var first_average = _average_slice(diagnostics_samples, 0, first_count)
+          	var last_start = max(0, diagnostics_samples.size() - min(60, diagnostics_samples.size()))
+          	var last_average = _average_slice(diagnostics_samples, last_start, diagnostics_samples.size())
+          	var trend = "WARM-UP"
+          	if diagnostics_samples.size() >= 120:
+          		trend = "STABLE" if last_average >= first_average * 0.85 else "SUSTAINED DROP"
+          	var minutes = int(floor(diagnostics_elapsed / 60.0))
+          	var seconds = int(diagnostics_elapsed) % 60
+          	var target = int(performance_profiles[performance_profile_index]["fps"])
+          	hud.set_diagnostics("DEVICE TEST · %02d:%02d / 10:00\nFPS %.0f avg · %.0f low · target %d\nScale %.2f · %s" % [minutes, seconds, average, low_fps, target, current_render_scale, trend], true)
+
+          func _finish_diagnostics():
+          	if not diagnostics_active:
+          		return
+          	diagnostics_active = false
+          	var target = float(performance_profiles[performance_profile_index]["fps"])
+          	var average = _average_slice(diagnostics_samples, 0, diagnostics_samples.size())
+          	var first_count = min(60, diagnostics_samples.size())
+          	var first_average = _average_slice(diagnostics_samples, 0, first_count)
+          	var last_start = max(0, diagnostics_samples.size() - min(60, diagnostics_samples.size()))
+          	var last_average = _average_slice(diagnostics_samples, last_start, diagnostics_samples.size())
+          	var sustained = diagnostics_samples.size() < 120 or last_average >= first_average * 0.85
+          	var passed = diagnostics_samples.size() >= 60 and average >= target * 0.85 and sustained
+          	var verdict = "PASS" if passed else "REVIEW"
+          	hud.set_diagnostics("DEVICE TEST · %s\nAverage %.0f FPS · final minute %.0f FPS\nScale %.2f · sustained %s" % [verdict, average, last_average, current_render_scale, "stable" if sustained else "drop detected"], true)
+          	if mobile_runtime:
+          		Input.vibrate_handheld(65 if passed else 28)
+
+          func _average_slice(values: Array, start_index: int, end_index: int) -> float:
+          	if values.is_empty() or end_index <= start_index:
+          		return 0.0
+          	var total = 0.0
+          	for index in range(start_index, end_index):
+          		total += float(values[index])
+          	return total / float(end_index - start_index)
+          GDSCRIPT
+          fi
+          rm -rf godot/.mobile_fix_parts
+          if ! git diff --quiet -- godot; then
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add godot/scripts/main.gd godot/scripts/player.gd godot/scripts/hud.gd godot/scripts/virtual_joystick.gd godot/.mobile_fix_parts
-            git commit -m "Optimize iPhone camera, controls and sustained performance"
+            git add -A godot
+            git commit -m "Add adaptive iPhone performance and diagnostics"
             git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
             git push origin HEAD:"${BRANCH}"
           fi

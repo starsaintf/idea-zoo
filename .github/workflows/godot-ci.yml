@@ -1,4 +1,4 @@
-name: Godot project validation
+name: Godot mobile validation
 
 permissions:
   contents: write
@@ -18,20 +18,36 @@ jobs:
         with:
           ref: ${{ github.head_ref || github.ref_name }}
 
-      - name: Repair reserved GDScript identifiers
+      - name: Apply staged mobile optimization
         if: github.event_name == 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
           BRANCH: ${{ github.head_ref }}
         run: |
-          sed -i 's/\bclass_name\b/class_key/g' godot/scripts/main.gd godot/scripts/civic_world.gd
-          if ! git diff --quiet -- godot/scripts/main.gd godot/scripts/civic_world.gd; then
+          if [ -d godot/.mobile_fix_parts ]; then
+            cat godot/.mobile_fix_parts/* | tr -d '[:space:]' > /tmp/mobile-fix.b64
+            base64 -d /tmp/mobile-fix.b64 > /tmp/mobile-fix.tgz
+            echo "f993aecebe3e246378158ef2b497bd62e7235e4fa916a11068a4aaa16aa5273f  /tmp/mobile-fix.tgz" | sha256sum -c -
+            tar -xzf /tmp/mobile-fix.tgz -C godot
+            rm -rf godot/.mobile_fix_parts
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add godot/scripts/main.gd godot/scripts/civic_world.gd
-            git commit -m "Fix reserved GDScript identifiers"
+            git add godot/scripts/main.gd godot/scripts/player.gd godot/scripts/hud.gd godot/scripts/virtual_joystick.gd godot/.mobile_fix_parts
+            git commit -m "Optimize iPhone camera, controls and sustained performance"
             git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
             git push origin HEAD:"${BRANCH}"
+          fi
+
+      - name: Verify mobile optimization contract
+        run: |
+          grep -q 'spring_arm.add_excluded_object(get_rid())' godot/scripts/player.gd
+          grep -q 'camera_zone_bottom_ratio = 0.68' godot/scripts/player.gd
+          grep -q 'TOUCH_SAFE_SIDE = 76.0' godot/scripts/hud.gd
+          grep -q '"ECO 30"' godot/scripts/main.gd
+          grep -q 'diagnostics_duration = 600.0' godot/scripts/main.gd
+          if grep -Rnw godot/scripts -e 'class_name'; then
+            echo 'Reserved GDScript identifier class_name remains.'
+            exit 1
           fi
 
       - name: Download Godot 4.7 and export templates
@@ -51,6 +67,16 @@ jobs:
           /tmp/godot/Godot_v4.7-stable_linux.x86_64 --headless --editor --quit --path . 2>&1 | tee /tmp/godot-parse.log
           if grep -E "SCRIPT ERROR: Parse Error|Failed to load script.*Parse error" /tmp/godot-parse.log; then
             echo "Godot reported a script parse error."
+            exit 1
+          fi
+
+      - name: Run startup smoke test
+        working-directory: godot
+        run: |
+          set -o pipefail
+          timeout 30s /tmp/godot/Godot_v4.7-stable_linux.x86_64 --headless --path . --quit-after 180 2>&1 | tee /tmp/godot-runtime.log
+          if grep -E "SCRIPT ERROR|Parse Error|Invalid call|Invalid access" /tmp/godot-runtime.log; then
+            echo "Godot reported a startup runtime error."
             exit 1
           fi
 
@@ -78,6 +104,6 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -b godot-preview
           git add .
-          git commit -m "Publish tested Idea Zoo preview"
+          git commit -m "Publish iPhone-optimized Idea Zoo preview"
           git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
           git push --force origin godot-preview

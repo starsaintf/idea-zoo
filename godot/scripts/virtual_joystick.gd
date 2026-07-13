@@ -4,11 +4,12 @@ signal vector_changed(value)
 
 var touch_index = -1
 var value = Vector2.ZERO
-var radius = 68.0
-var knob_radius = 26.0
+var radius = 62.0
+var knob_radius = 24.0
+var dead_zone = 0.14
 
 func _ready():
-	custom_minimum_size = Vector2(170, 170)
+	custom_minimum_size = Vector2(154, 154)
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	queue_redraw()
 
@@ -42,13 +43,18 @@ func _update_value(position: Vector2):
 	var offset = position - center
 	if offset.length() > radius:
 		offset = offset.normalized() * radius
-	value = offset / radius
+	var magnitude = offset.length() / radius
+	if magnitude <= dead_zone:
+		value = Vector2.ZERO
+	else:
+		var remapped = (magnitude - dead_zone) / (1.0 - dead_zone)
+		value = offset.normalized() * clamp(remapped, 0.0, 1.0)
 	vector_changed.emit(value)
 	queue_redraw()
 
 func _draw():
 	var center = size * 0.5
-	draw_circle(center, radius + 10.0, Color(0.02, 0.05, 0.06, 0.42))
-	draw_arc(center, radius, 0, TAU, 64, Color(0.82, 0.64, 0.37, 0.5), 2.0)
-	draw_circle(center + value * radius, knob_radius, Color(0.27, 0.72, 0.68, 0.72))
-	draw_arc(center + value * radius, knob_radius, 0, TAU, 32, Color(0.91, 0.87, 0.78, 0.85), 2.0)
+	draw_circle(center, radius + 12.0, Color(0.02, 0.05, 0.06, 0.48))
+	draw_arc(center, radius, 0, TAU, 64, Color(0.82, 0.64, 0.37, 0.62), 2.0)
+	draw_circle(center + value * radius, knob_radius, Color(0.27, 0.72, 0.68, 0.82))
+	draw_arc(center + value * radius, knob_radius, 0, TAU, 32, Color(0.91, 0.87, 0.78, 0.92), 2.0)

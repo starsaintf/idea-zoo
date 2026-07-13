@@ -97,16 +97,19 @@ func _build_touch_controls():
 	add_child(touch_root)
 
 	joystick = Joystick.new()
+	joystick.custom_minimum_size = Vector2(154, 154)
 	joystick.size = Vector2(154, 154)
 	joystick.vector_changed.connect(func(value): joystick_changed.emit(value))
 	touch_root.add_child(joystick)
 
 	interact_button = _button("TOUCH", teal, 18)
+	interact_button.custom_minimum_size = Vector2(118, 118)
 	interact_button.size = Vector2(118, 118)
 	interact_button.pressed.connect(func(): interact_pressed.emit())
 	touch_root.add_child(interact_button)
 
 	lens_button = _button("LENS", brass, 17)
+	lens_button.custom_minimum_size = Vector2(92, 92)
 	lens_button.size = Vector2(92, 92)
 	lens_button.button_down.connect(func(): lens_changed.emit(true))
 	lens_button.button_up.connect(func(): lens_changed.emit(false))
@@ -181,12 +184,15 @@ func _layout_touch_controls():
 	var action_size = 104.0 if is_compact else 118.0
 	var lens_size = 78.0 if is_compact else 92.0
 
+	joystick.custom_minimum_size = Vector2(joystick_size, joystick_size)
 	joystick.size = Vector2(joystick_size, joystick_size)
 	joystick.position = Vector2(side_safe, viewport_size.y - joystick_size - bottom_safe)
 
+	interact_button.custom_minimum_size = Vector2(action_size, action_size)
 	interact_button.size = Vector2(action_size, action_size)
 	interact_button.position = Vector2(viewport_size.x - action_size - side_safe, viewport_size.y - action_size - bottom_safe)
 
+	lens_button.custom_minimum_size = Vector2(lens_size, lens_size)
 	lens_button.size = Vector2(lens_size, lens_size)
 	lens_button.position = Vector2(
 		viewport_size.x - action_size - side_safe - lens_size - 14.0,

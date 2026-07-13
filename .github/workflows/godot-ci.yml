@@ -1,0 +1,40 @@
+name: Godot project validation
+
+on:
+  pull_request:
+    paths:
+      - "godot/**"
+      - ".github/workflows/godot-ci.yml"
+  workflow_dispatch:
+
+jobs:
+  validate-and-export-web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download Godot 4.7 and export templates
+        run: |
+          curl -L -o /tmp/godot.zip https://github.com/godotengine/godot/releases/download/4.7-stable/Godot_v4.7-stable_linux.x86_64.zip
+          curl -L -o /tmp/templates.tpz https://github.com/godotengine/godot/releases/download/4.7-stable/Godot_v4.7-stable_export_templates.tpz
+          unzip -q /tmp/godot.zip -d /tmp/godot
+          chmod +x /tmp/godot/Godot_v4.7-stable_linux.x86_64
+          mkdir -p "$HOME/.local/share/godot/export_templates/4.7.stable"
+          unzip -q /tmp/templates.tpz -d /tmp/templates
+          cp -R /tmp/templates/templates/* "$HOME/.local/share/godot/export_templates/4.7.stable/"
+
+      - name: Parse project and import resources
+        working-directory: godot
+        run: /tmp/godot/Godot_v4.7-stable_linux.x86_64 --headless --editor --quit --path .
+
+      - name: Export installable mobile web build
+        working-directory: godot
+        run: |
+          mkdir -p build/web
+          /tmp/godot/Godot_v4.7-stable_linux.x86_64 --headless --path . --export-release Web build/web/index.html
+
+      - name: Upload web build
+        uses: actions/upload-artifact@v4
+        with:
+          name: idea-zoo-godot-web
+          path: godot/build/web

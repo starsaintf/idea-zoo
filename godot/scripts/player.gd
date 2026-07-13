@@ -7,7 +7,9 @@ signal lens_changed(active)
 var move_vector = Vector2.ZERO
 var mobile_vector = Vector2.ZERO
 var camera_yaw = 0.0
-var camera_pitch = -0.42
+var camera_pitch = -0.38
+var camera_target_yaw = 0.0
+var camera_target_pitch = -0.38
 var move_speed = 6.2
 var threadway_speed = 9.2
 var lens_active = false
@@ -20,6 +22,12 @@ var camera: Camera3D
 var body_visual: Node3D
 var look_touch_index = -1
 var visual_time = 0.0
+var camera_smooth_speed = 11.5
+var touch_yaw_sensitivity = 0.00175
+var touch_pitch_sensitivity = 0.00135
+var mouse_yaw_sensitivity = 0.0032
+var mouse_pitch_sensitivity = 0.0025
+var camera_zone_bottom_ratio = 0.68
 
 func _ready():
 	name = "Keeper"
@@ -34,6 +42,7 @@ func _build_body():
 	collision.shape = capsule
 	collision.position.y = 0.86
 	add_child(collision)
+
 	body_visual = Node3D.new()
 	body_visual.name = "KeeperVisual"
 	add_child(body_visual)
@@ -45,6 +54,7 @@ func _build_body():
 	coat.position.y = 0.83
 	coat.material_override = _material(Color("#d9d0bd"))
 	body_visual.add_child(coat)
+
 	var head = MeshInstance3D.new()
 	var head_mesh = SphereMesh.new()
 	head_mesh.radius = 0.31
@@ -53,6 +63,7 @@ func _build_body():
 	head.position.y = 1.74
 	head.material_override = _material(Color("#6d5141"))
 	body_visual.add_child(head)
+
 	var cloak = MeshInstance3D.new()
 	var cloak_mesh = PrismMesh.new()
 	cloak_mesh.size = Vector3(0.9, 1.4, 0.55)
@@ -61,6 +72,7 @@ func _build_body():
 	cloak.rotation_degrees.x = -9
 	cloak.material_override = _material(Color("#18545a"), 0.28)
 	body_visual.add_child(cloak)
+
 	var lens = MeshInstance3D.new()
 	var lens_mesh = SphereMesh.new()
 	lens_mesh.radius = 0.13
@@ -73,15 +85,19 @@ func _build_body():
 func _build_camera():
 	camera_pivot = Node3D.new()
 	camera_pivot.name = "CameraPivot"
-	camera_pivot.position.y = 1.45
+	camera_pivot.position.y = 1.55
 	add_child(camera_pivot)
+
 	spring_arm = SpringArm3D.new()
-	spring_arm.spring_length = 7.8
-	spring_arm.margin = 0.25
+	spring_arm.spring_length = 6.6
+	spring_arm.margin = 0.48
 	spring_arm.collision_mask = 1
 	camera_pivot.add_child(spring_arm)
+	spring_arm.add_excluded_object(get_rid())
+
 	camera = Camera3D.new()
-	camera.fov = 58.0
+	camera.fov = 60.0
+	camera.near = 0.12
 	camera.current = true
 	spring_arm.add_child(camera)
 	_apply_camera_rotation()
@@ -98,20 +114,29 @@ func _material(color: Color, emission := 0.0):
 
 func _unhandled_input(event):
 	if event is InputEventMouseMotion and Input.is_mouse_button_pressed(MOUSE_BUTTON_RIGHT):
-		camera_yaw -= event.relative.x * 0.004
-		camera_pitch = clamp(camera_pitch - event.relative.y * 0.003, -0.78, -0.18)
-		_apply_camera_rotation()
+		camera_target_yaw -= event.relative.x * mouse_yaw_sensitivity
+		camera_target_pitch = clamp(camera_target_pitch - event.relative.y * mouse_pitch_sensitivity, -0.64, -0.27)
 	elif event is InputEventScreenTouch:
-		if event.pressed and event.position.x > get_viewport().get_visible_rect().size.x * 0.42 and look_touch_index == -1:
+		var viewport_size = get_viewport().get_visible_rect().size
+		var in_camera_zone = event.position.x > viewport_size.x * 0.34 and event.position.y < viewport_size.y * camera_zone_bottom_ratio
+		if event.pressed and in_camera_zone and look_touch_index == -1:
 			look_touch_index = event.index
 		elif not event.pressed and event.index == look_touch_index:
 			look_touch_index = -1
 	elif event is InputEventScreenDrag and event.index == look_touch_index:
-		camera_yaw -= event.relative.x * 0.007
-		camera_pitch = clamp(camera_pitch - event.relative.y * 0.005, -0.78, -0.18)
-		_apply_camera_rotation()
+		var drag = event.relative
+		if drag.length() > 34.0:
+			drag = drag.normalized() * 34.0
+		camera_target_yaw -= drag.x * touch_yaw_sensitivity
+		camera_target_pitch = clamp(camera_target_pitch - drag.y * touch_pitch_sensitivity, -0.64, -0.27)
 
-func _process(_delta):
+func _process(delta):
+	var camera_blend = 1.0 - exp(-camera_smooth_speed * delta)
+	camera_yaw = lerp_angle(camera_yaw, camera_target_yaw, camera_blend)
+	camera_pitch = lerp(camera_pitch, camera_target_pitch, camera_blend)
+	_apply_camera_rotation()
+	_update_camera_obstruction(delta)
+
 	var keyboard_lens = Input.is_action_pressed("lens")
 	if keyboard_lens != lens_active and not DisplayServer.is_touchscreen_available():
 		set_lens(keyboard_lens)
@@ -119,6 +144,17 @@ func _process(_delta):
 		interact_requested.emit()
 	if Input.is_action_just_pressed("cycle_seal"):
 		cycle_seal_requested.emit()
+
+func _update_camera_obstruction(delta: float):
+	if spring_arm == null or body_visual == null:
+		return
+	var hit_length = spring_arm.get_hit_length()
+	var close_camera = hit_length > 0.0 and hit_length < 1.75
+	body_visual.visible = not close_camera
+	var target_height = 2.15 if close_camera else 1.55
+	camera_pivot.position.y = lerp(camera_pivot.position.y, target_height, 1.0 - exp(-8.0 * delta))
+	var target_fov = 67.0 if close_camera else 60.0
+	camera.fov = lerp(camera.fov, target_fov, 1.0 - exp(-7.0 * delta))
 
 func _physics_process(delta):
 	visual_time += delta

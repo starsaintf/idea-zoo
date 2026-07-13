@@ -320,6 +320,9 @@ func _build_controls():
 func _layout_touch_controls():
 	if not is_touch or joystick == null:
 		return
+	var viewport_size = get_viewport().get_visible_rect().size
+	touch_controls.position = Vector2.ZERO
+	touch_controls.size = viewport_size
 	joystick.position = Vector2(TOUCH_SAFE_SIDE, -154.0 - TOUCH_SAFE_BOTTOM)
 	interact_button.position = Vector2(-118.0 - TOUCH_SAFE_SIDE, -118.0 - TOUCH_SAFE_BOTTOM)
 	lens_button.position = Vector2(-226.0 - TOUCH_SAFE_SIDE, -92.0 - TOUCH_SAFE_BOTTOM)

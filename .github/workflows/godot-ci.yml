@@ -18,15 +18,6 @@ jobs:
         with:
           ref: ${{ github.head_ref || github.ref_name }}
 
-      - name: Reconstruct expanded Godot source
-        run: |
-          if [ -d godot/.update_parts ]; then
-            cat godot/.update_parts/* > /tmp/idea-zoo-update.b64
-            base64 -d /tmp/idea-zoo-update.b64 > /tmp/idea-zoo-update.tgz
-            echo "020ffc12c973cffbab0cc0729bec192749f1a2ec81a5a8120214454850556000  /tmp/idea-zoo-update.tgz" | sha256sum -c -
-            tar -xzf /tmp/idea-zoo-update.tgz -C godot
-          fi
-
       - name: Download Godot 4.7 and export templates
         run: |
           curl -L -o /tmp/godot.zip https://github.com/godotengine/godot/releases/download/4.7-stable/Godot_v4.7-stable_linux.x86_64.zip
@@ -40,23 +31,6 @@ jobs:
       - name: Parse project and import resources
         working-directory: godot
         run: /tmp/godot/Godot_v4.7-stable_linux.x86_64 --headless --editor --quit --path .
-
-      - name: Commit validated expansion source
-        if: github.event_name == 'pull_request'
-        env:
-          GH_TOKEN: ${{ github.token }}
-          BRANCH: ${{ github.head_ref }}
-        run: |
-          if [ -d godot/.update_parts ]; then
-            rm -rf godot/.update_parts
-            rm -f godot/.update_payload.tgz.b64
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add godot
-            git commit -m "Expand the Zoo ecology and institutional gameplay"
-            git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
-            git push origin HEAD:"${BRANCH}"
-          fi
 
       - name: Export installable mobile web build
         working-directory: godot

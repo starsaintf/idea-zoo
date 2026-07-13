@@ -18,12 +18,13 @@ jobs:
         with:
           ref: ${{ github.head_ref || github.ref_name }}
 
-      - name: Apply queued Godot source update for validation
+      - name: Reconstruct expanded Godot source
         run: |
-          if [ -f godot/.update_payload.tgz.b64 ]; then
-            base64 -d godot/.update_payload.tgz.b64 > /tmp/idea-zoo-update.tgz
+          if [ -d godot/.update_parts ]; then
+            cat godot/.update_parts/* > /tmp/idea-zoo-update.b64
+            base64 -d /tmp/idea-zoo-update.b64 > /tmp/idea-zoo-update.tgz
+            echo "020ffc12c973cffbab0cc0729bec192749f1a2ec81a5a8120214454850556000  /tmp/idea-zoo-update.tgz" | sha256sum -c -
             tar -xzf /tmp/idea-zoo-update.tgz -C godot
-            rm godot/.update_payload.tgz.b64
           fi
 
       - name: Download Godot 4.7 and export templates

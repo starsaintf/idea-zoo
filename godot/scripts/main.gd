@@ -63,7 +63,7 @@ func _ready():
 	_load_archive()
 	for class_key in classes:
 		classification_scores[class_key] = 0.0
-	mobile_runtime = OS.has_feature("mobile") or DisplayServer.is_touchscreen_available() or OS.has_environment("IDEA_ZOO_MOBILE_TEST")
+	mobile_runtime = OS.has_feature("mobile") or DisplayServer.is_touchscreen_available() or OS.has_environment("IDEA_ZOO_MOBILE_TEST") or OS.has_environment("IDEA_ZOO_MOBILE_TEST")
 
 	world = CivicWorld.new()
 	add_child(world)

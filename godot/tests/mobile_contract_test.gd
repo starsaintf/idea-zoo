@@ -7,7 +7,9 @@ var results = {}
 var game
 
 func _initialize():
+	root.content_scale_size = Vector2i(896, 414)
 	root.size = Vector2i(896, 414)
+	DisplayServer.window_set_size(Vector2i(896, 414))
 	game = MainGame.new()
 	root.add_child(game)
 	call_deferred("_run_tests")
@@ -21,15 +23,17 @@ func _near(value: float, expected: float, tolerance := 0.5) -> bool:
 	return abs(value - expected) <= tolerance
 
 func _run_tests():
-	for frame in range(12):
+	for frame in range(16):
 		await process_frame
 
 	game.hud.message_panel.visible = false
-	game.hud.is_touch = true
-	game.hud.touch_controls.visible = true
 	game.hud._layout_touch_controls()
 	await process_frame
+	var viewport_size = game.player.get_viewport().get_visible_rect().size
 
+	_check(game.hud.is_touch, "mobile_hud_constructed")
+	_check(viewport_size.x >= 890 and viewport_size.x <= 900, "iphone_viewport_width")
+	_check(viewport_size.y >= 410 and viewport_size.y <= 420, "iphone_viewport_height")
 	_check(_near(game.hud.joystick.position.x, 76.0), "joystick_safe_left")
 	_check(_near(game.hud.interact_button.position.x, -194.0), "action_safe_right")
 	_check(_near(game.hud.interact_button.position.y, -164.0), "action_safe_bottom")
@@ -37,6 +41,7 @@ func _run_tests():
 	_check(game.hud.joystick.size.x >= 154.0, "joystick_touch_target")
 	_check(game.hud.interact_button.size.x >= 118.0, "action_touch_target")
 
+	game.performance_profile_index = 0
 	game._apply_performance_profile(0)
 	_check(Engine.max_fps == 30, "eco_30_fps_cap")
 	_check(_near(game.current_render_scale, 0.62, 0.001), "eco_render_scale")
@@ -53,14 +58,14 @@ func _run_tests():
 	var lower_touch = InputEventScreenTouch.new()
 	lower_touch.index = 7
 	lower_touch.pressed = true
-	lower_touch.position = Vector2(520, 340)
+	lower_touch.position = Vector2(viewport_size.x * 0.58, viewport_size.y * 0.86)
 	player._unhandled_input(lower_touch)
 	_check(player.look_touch_index == -1, "bottom_controls_excluded_from_camera")
 
 	var look_touch = InputEventScreenTouch.new()
 	look_touch.index = 8
 	look_touch.pressed = true
-	look_touch.position = Vector2(520, 175)
+	look_touch.position = Vector2(viewport_size.x * 0.58, viewport_size.y * 0.35)
 	player._unhandled_input(look_touch)
 	_check(player.look_touch_index == 8, "camera_zone_claims_touch")
 	var yaw_before = player.camera_target_yaw
@@ -74,7 +79,7 @@ func _run_tests():
 	var look_release = InputEventScreenTouch.new()
 	look_release.index = 8
 	look_release.pressed = false
-	look_release.position = Vector2(575, 187)
+	look_release.position = Vector2(viewport_size.x * 0.64, viewport_size.y * 0.38)
 	player._unhandled_input(look_release)
 	_check(player.look_touch_index == -1, "camera_touch_released")
 
@@ -100,7 +105,8 @@ func _run_tests():
 	results["camera_distance"] = camera_distance
 	results["bounded_yaw_delta"] = yaw_delta
 	results["render_scale"] = game.current_render_scale
-	results["viewport"] = [root.size.x, root.size.y]
+	results["viewport"] = [viewport_size.x, viewport_size.y]
+	results["diagnostics_text"] = game.hud.diagnostics_label.text
 	results["failures"] = failures
 	var file = FileAccess.open("res://build/mobile-test-results.json", FileAccess.WRITE)
 	file.store_string(JSON.stringify(results, "  "))

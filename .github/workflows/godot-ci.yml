@@ -41,6 +41,23 @@ jobs:
         working-directory: godot
         run: /tmp/godot/Godot_v4.7-stable_linux.x86_64 --headless --editor --quit --path .
 
+      - name: Commit validated expansion source
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: ${{ github.head_ref }}
+        run: |
+          if [ -d godot/.update_parts ]; then
+            rm -rf godot/.update_parts
+            rm -f godot/.update_payload.tgz.b64
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add godot
+            git commit -m "Expand the Zoo ecology and institutional gameplay"
+            git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+            git push origin HEAD:"${BRANCH}"
+          fi
+
       - name: Export installable mobile web build
         working-directory: godot
         run: |

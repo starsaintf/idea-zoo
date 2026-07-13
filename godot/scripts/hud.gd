@@ -323,13 +323,16 @@ func _layout_touch_controls():
 	var viewport_size = get_viewport().get_visible_rect().size
 	touch_controls.position = Vector2.ZERO
 	touch_controls.size = viewport_size
-	joystick.position = Vector2(TOUCH_SAFE_SIDE, -154.0 - TOUCH_SAFE_BOTTOM)
-	interact_button.position = Vector2(-118.0 - TOUCH_SAFE_SIDE, -118.0 - TOUCH_SAFE_BOTTOM)
-	lens_button.position = Vector2(-226.0 - TOUCH_SAFE_SIDE, -92.0 - TOUCH_SAFE_BOTTOM)
-	cycle_button.position = Vector2(-218.0 - TOUCH_SAFE_SIDE, -184.0 - TOUCH_SAFE_BOTTOM)
-	performance_button.position = Vector2(-122.0 - TOUCH_SAFE_SIDE, 122.0)
-	diagnostics_button.position = Vector2(-122.0 - TOUCH_SAFE_SIDE, 168.0)
-	diagnostics_label.position = Vector2(-300.0 - TOUCH_SAFE_SIDE, 216.0)
+	var controls = [joystick, interact_button, lens_button, cycle_button, performance_button, diagnostics_button, diagnostics_label]
+	for control in controls:
+		control.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	joystick.position = Vector2(TOUCH_SAFE_SIDE, viewport_size.y - 154.0 - TOUCH_SAFE_BOTTOM)
+	interact_button.position = Vector2(viewport_size.x - 118.0 - TOUCH_SAFE_SIDE, viewport_size.y - 118.0 - TOUCH_SAFE_BOTTOM)
+	lens_button.position = Vector2(viewport_size.x - 118.0 - TOUCH_SAFE_SIDE - 16.0 - 92.0, viewport_size.y - 92.0 - TOUCH_SAFE_BOTTOM)
+	cycle_button.position = Vector2(viewport_size.x - 118.0 - TOUCH_SAFE_SIDE - 8.0 - 76.0, viewport_size.y - 118.0 - TOUCH_SAFE_BOTTOM - 76.0 - 10.0)
+	performance_button.position = Vector2(viewport_size.x - 122.0 - TOUCH_SAFE_SIDE, 122.0)
+	diagnostics_button.position = Vector2(viewport_size.x - 122.0 - TOUCH_SAFE_SIDE, 168.0)
+	diagnostics_label.position = Vector2(viewport_size.x - 300.0 - TOUCH_SAFE_SIDE, 216.0)
 
 func _round_button(text: String, button_size: Vector2, color: Color):
 	var button = Button.new()

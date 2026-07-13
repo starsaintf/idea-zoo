@@ -46,9 +46,9 @@ func _run_tests():
 	_check(action_rect.position.x >= 44.0 and action_rect.end.x <= viewport_size.x - 44.0, "action_inside_safe_area")
 	_check(action_rect.position.y >= 0.0 and action_rect.end.y <= viewport_size.y - 44.0, "action_bottom_safe_area")
 	_check(_near(game.hud.joystick.position.x, 76.0), "joystick_safe_left")
-	_check(_near(game.hud.interact_button.position.x, -194.0), "action_safe_right")
-	_check(_near(game.hud.interact_button.position.y, -164.0), "action_safe_bottom")
-	_check(_near(game.hud.performance_button.position.x, -198.0), "performance_safe_right")
+	_check(_near(game.hud.interact_button.position.x, viewport_size.x - 194.0), "action_safe_right")
+	_check(_near(game.hud.interact_button.position.y, viewport_size.y - 164.0), "action_safe_bottom")
+	_check(_near(game.hud.performance_button.position.x, viewport_size.x - 198.0), "performance_safe_right")
 	_check(game.hud.joystick.size.x >= 154.0, "joystick_touch_target")
 	_check(game.hud.interact_button.size.x >= 118.0, "action_touch_target")
 

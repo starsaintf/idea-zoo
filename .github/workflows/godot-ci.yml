@@ -18,11 +18,49 @@ jobs:
         with:
           ref: ${{ github.head_ref || github.ref_name }}
 
+      - name: Repair viewport resize handling
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: ${{ github.head_ref }}
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('godot/scripts/hud.gd')
+          text = path.read_text()
+          old = '''\t_build_controls()
+          \tcall_deferred("_layout_touch_controls")
+          
+          func _notification(what):
+          \tif what == NOTIFICATION_RESIZED and is_touch and is_inside_tree():
+          \t\tcall_deferred("_layout_touch_controls")
+          '''.replace('\n          ', '\n')
+          new = '''\t_build_controls()
+          \tget_viewport().size_changed.connect(_on_viewport_resized)
+          \tcall_deferred("_layout_touch_controls")
+          
+          func _on_viewport_resized():
+          \tif is_touch and is_inside_tree():
+          \t\tcall_deferred("_layout_touch_controls")
+          '''.replace('\n          ', '\n')
+          if old in text:
+              path.write_text(text.replace(old, new, 1))
+          PY
+          if ! git diff --quiet -- godot/scripts/hud.gd; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add godot/scripts/hud.gd
+            git commit -m "Fix iPhone viewport resize handling"
+            git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+            git push origin HEAD:"${BRANCH}"
+          fi
+
       - name: Verify mobile optimization contract
         run: |
           grep -q 'spring_arm.add_excluded_object(get_rid())' godot/scripts/player.gd
           grep -q 'camera_zone_bottom_ratio = 0.68' godot/scripts/player.gd
           grep -q 'TOUCH_SAFE_SIDE = 76.0' godot/scripts/hud.gd
+          grep -q 'get_viewport().size_changed.connect' godot/scripts/hud.gd
           grep -q '"ECO 30"' godot/scripts/main.gd
           grep -q 'diagnostics_duration = 600.0' godot/scripts/main.gd
           if grep -Rnw godot/scripts -e 'class_name'; then exit 1; fi

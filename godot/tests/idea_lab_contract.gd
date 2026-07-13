@@ -10,7 +10,9 @@ func _initialize():
 	call_deferred("_run")
 
 func _run():
+	DisplayServer.window_set_size(Vector2i(896, 414))
 	root.size = Vector2i(896, 414)
+	root.content_scale_size = Vector2i(896, 414)
 	game = MainGame.new()
 	root.add_child(game)
 	await process_frame
@@ -32,6 +34,7 @@ func _run():
 	_check(game.profile.get("title") == "Meeting Bridge", "intake title was not preserved")
 	_check(game.creature.visible, "specimen did not hatch")
 	_check(String(game.profile.get("class", "")).length() > 0, "specimen class missing")
+	game.hud.close_overlay()
 	game._on_overlay_continued()
 	await process_frame
 	await process_frame
@@ -54,6 +57,7 @@ func _run():
 	_check(game.profile.get("next_actions", []).size() == 3, "real-world action plan missing")
 	_check(FileAccess.file_exists("user://idea_zoo_real_ideas.json"), "specimen archive was not saved")
 	var viewport_size = root.get_visible_rect().size
+	_check(int(viewport_size.x) == 896 and int(viewport_size.y) == 414, "contract did not render at 896x414")
 	_check(game.hud.joystick.position.x >= 44, "joystick violates left safe area")
 	_check(game.hud.interact_button.position.x + game.hud.interact_button.size.x <= viewport_size.x - 44, "action button violates right safe area")
 	_check(game.hud.interact_button.position.y + game.hud.interact_button.size.y <= viewport_size.y - 20, "action button violates bottom safe area")

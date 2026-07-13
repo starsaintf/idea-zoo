@@ -33,6 +33,11 @@ func _run():
 	_check(game.creature.visible, "specimen did not hatch")
 	_check(String(game.profile.get("class", "")).length() > 0, "specimen class missing")
 	game._on_overlay_continued()
+	await process_frame
+	await process_frame
+	var world_image = root.get_texture().get_image()
+	if world_image != null and not world_image.is_empty():
+		world_image.save_png("res://build/idea-lab-world.png")
 	for test_id in ["desire", "commitment", "burden", "refusal"]:
 		game._on_test_submitted(test_id, 2 if test_id != "commitment" else 3, "verified evidence for " + test_id)
 	_check(game.completed_tests == 4, "four evidence tests did not complete")

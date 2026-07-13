@@ -55,6 +55,7 @@ jobs:
           path: |
             godot/build/idea-lab-contract.json
             godot/build/idea-lab-contract.png
+            godot/build/idea-lab-world.png
           if-no-files-found: error
 
       - name: Export mobile Web build

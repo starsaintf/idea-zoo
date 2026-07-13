@@ -30,10 +30,21 @@ func _run_tests():
 	game.hud._layout_touch_controls()
 	await process_frame
 	var viewport_size = game.player.get_viewport().get_visible_rect().size
+	var joystick_rect = game.hud.joystick.get_global_rect()
+	var action_rect = game.hud.interact_button.get_global_rect()
 
 	_check(game.hud.is_touch, "mobile_hud_constructed")
 	_check(viewport_size.x >= 890 and viewport_size.x <= 900, "iphone_viewport_width")
 	_check(viewport_size.y >= 410 and viewport_size.y <= 420, "iphone_viewport_height")
+	_check(_near(game.hud.touch_controls.size.x, viewport_size.x), "touch_root_width")
+	_check(_near(game.hud.touch_controls.size.y, viewport_size.y), "touch_root_height")
+	_check(game.hud.touch_controls.is_visible_in_tree(), "touch_root_visible")
+	_check(game.hud.joystick.is_visible_in_tree(), "joystick_visible")
+	_check(game.hud.interact_button.is_visible_in_tree(), "action_visible")
+	_check(joystick_rect.position.x >= 44.0 and joystick_rect.end.x <= viewport_size.x - 44.0, "joystick_inside_safe_area")
+	_check(joystick_rect.position.y >= 0.0 and joystick_rect.end.y <= viewport_size.y - 44.0, "joystick_bottom_safe_area")
+	_check(action_rect.position.x >= 44.0 and action_rect.end.x <= viewport_size.x - 44.0, "action_inside_safe_area")
+	_check(action_rect.position.y >= 0.0 and action_rect.end.y <= viewport_size.y - 44.0, "action_bottom_safe_area")
 	_check(_near(game.hud.joystick.position.x, 76.0), "joystick_safe_left")
 	_check(_near(game.hud.interact_button.position.x, -194.0), "action_safe_right")
 	_check(_near(game.hud.interact_button.position.y, -164.0), "action_safe_bottom")
@@ -106,6 +117,8 @@ func _run_tests():
 	results["bounded_yaw_delta"] = yaw_delta
 	results["render_scale"] = game.current_render_scale
 	results["viewport"] = [viewport_size.x, viewport_size.y]
+	results["joystick_rect"] = [joystick_rect.position.x, joystick_rect.position.y, joystick_rect.size.x, joystick_rect.size.y]
+	results["action_rect"] = [action_rect.position.x, action_rect.position.y, action_rect.size.x, action_rect.size.y]
 	results["diagnostics_text"] = game.hud.diagnostics_label.text
 	results["failures"] = failures
 	var file = FileAccess.open("res://build/mobile-test-results.json", FileAccess.WRITE)

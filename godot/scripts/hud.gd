@@ -53,10 +53,11 @@ func _ready():
 	_build_message()
 	_build_toast()
 	_build_controls()
+	get_viewport().size_changed.connect(_on_viewport_resized)
 	call_deferred("_layout_touch_controls")
 
-func _notification(what):
-	if what == NOTIFICATION_RESIZED and is_touch and is_inside_tree():
+func _on_viewport_resized():
+	if is_touch and is_inside_tree():
 		call_deferred("_layout_touch_controls")
 
 func _process(delta):

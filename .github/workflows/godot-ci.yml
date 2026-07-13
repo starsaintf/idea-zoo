@@ -18,54 +18,6 @@ jobs:
         with:
           ref: ${{ github.head_ref || github.ref_name }}
 
-      - name: Use absolute mobile control coordinates
-        if: github.event_name == 'pull_request'
-        env:
-          GH_TOKEN: ${{ github.token }}
-          BRANCH: ${{ github.head_ref }}
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          hud = Path('godot/scripts/hud.gd')
-          text = hud.read_text()
-          old = '''\tjoystick.position = Vector2(TOUCH_SAFE_SIDE, -154.0 - TOUCH_SAFE_BOTTOM)
-          \tinteract_button.position = Vector2(-118.0 - TOUCH_SAFE_SIDE, -118.0 - TOUCH_SAFE_BOTTOM)
-          \tlens_button.position = Vector2(-226.0 - TOUCH_SAFE_SIDE, -92.0 - TOUCH_SAFE_BOTTOM)
-          \tcycle_button.position = Vector2(-218.0 - TOUCH_SAFE_SIDE, -184.0 - TOUCH_SAFE_BOTTOM)
-          \tperformance_button.position = Vector2(-122.0 - TOUCH_SAFE_SIDE, 122.0)
-          \tdiagnostics_button.position = Vector2(-122.0 - TOUCH_SAFE_SIDE, 168.0)
-          \tdiagnostics_label.position = Vector2(-300.0 - TOUCH_SAFE_SIDE, 216.0)
-          '''.replace('\n          ', '\n')
-          new = '''\tvar controls = [joystick, interact_button, lens_button, cycle_button, performance_button, diagnostics_button, diagnostics_label]
-          \tfor control in controls:
-          \t\tcontrol.set_anchors_preset(Control.PRESET_TOP_LEFT)
-          \tjoystick.position = Vector2(TOUCH_SAFE_SIDE, viewport_size.y - 154.0 - TOUCH_SAFE_BOTTOM)
-          \tinteract_button.position = Vector2(viewport_size.x - 118.0 - TOUCH_SAFE_SIDE, viewport_size.y - 118.0 - TOUCH_SAFE_BOTTOM)
-          \tlens_button.position = Vector2(viewport_size.x - 118.0 - TOUCH_SAFE_SIDE - 16.0 - 92.0, viewport_size.y - 92.0 - TOUCH_SAFE_BOTTOM)
-          \tcycle_button.position = Vector2(viewport_size.x - 118.0 - TOUCH_SAFE_SIDE - 8.0 - 76.0, viewport_size.y - 118.0 - TOUCH_SAFE_BOTTOM - 76.0 - 10.0)
-          \tperformance_button.position = Vector2(viewport_size.x - 122.0 - TOUCH_SAFE_SIDE, 122.0)
-          \tdiagnostics_button.position = Vector2(viewport_size.x - 122.0 - TOUCH_SAFE_SIDE, 168.0)
-          \tdiagnostics_label.position = Vector2(viewport_size.x - 300.0 - TOUCH_SAFE_SIDE, 216.0)
-          '''.replace('\n          ', '\n')
-          if old in text:
-              hud.write_text(text.replace(old, new, 1))
-
-          test = Path('godot/tests/mobile_contract_test.gd')
-          text = test.read_text()
-          text = text.replace('_near(game.hud.interact_button.position.x, -194.0)', '_near(game.hud.interact_button.position.x, viewport_size.x - 194.0)')
-          text = text.replace('_near(game.hud.interact_button.position.y, -164.0)', '_near(game.hud.interact_button.position.y, viewport_size.y - 164.0)')
-          text = text.replace('_near(game.hud.performance_button.position.x, -198.0)', '_near(game.hud.performance_button.position.x, viewport_size.x - 198.0)')
-          test.write_text(text)
-          PY
-          if ! git diff --quiet -- godot/scripts/hud.gd godot/tests/mobile_contract_test.gd; then
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add godot/scripts/hud.gd godot/tests/mobile_contract_test.gd
-            git commit -m "Place mobile controls with absolute safe-area coordinates"
-            git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
-            git push origin HEAD:"${BRANCH}"
-          fi
-
       - name: Verify mobile optimization contract
         run: |
           grep -q 'spring_arm.add_excluded_object(get_rid())' godot/scripts/player.gd

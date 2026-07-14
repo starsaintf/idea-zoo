@@ -10,6 +10,7 @@ namespace IdeaZoo.Presentation
     {
         private readonly List<Renderer> _smallDetails = new List<Renderer>();
         private readonly List<Renderer> _mediumDetails = new List<Renderer>();
+        private readonly List<Renderer> _landmarks = new List<Renderer>();
         private Camera _camera;
         private float _nextCull;
         private float _frameAccumulator;
@@ -28,10 +29,17 @@ namespace IdeaZoo.Presentation
 
             foreach (var renderer in world.GetComponentsInChildren<Renderer>(true))
             {
-                var name = renderer.name;
-                if (IsSmall(name)) _smallDetails.Add(renderer);
-                else if (IsMedium(name)) _mediumDetails.Add(renderer);
-                if (name.Contains("Glass") || name.Contains("Glow") || name.Contains("Light"))
+                var authored = renderer.GetComponentInParent<AuthoredEnvironmentDetail>();
+                if (authored != null)
+                {
+                    if (authored.Tier == AuthoredDetailTier.Decorative) _smallDetails.Add(renderer);
+                    else if (authored.Tier == AuthoredDetailTier.Department) _mediumDetails.Add(renderer);
+                    else _landmarks.Add(renderer);
+                }
+                else if (IsSmall(renderer.name)) _smallDetails.Add(renderer);
+                else if (IsMedium(renderer.name)) _mediumDetails.Add(renderer);
+
+                if (renderer.name.Contains("Glass") || renderer.name.Contains("Glow") || renderer.name.Contains("Light") || renderer.sharedMaterial != null && renderer.sharedMaterial.name.Contains("TealGlow"))
                 {
                     renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                     renderer.receiveShadows = false;
@@ -68,21 +76,20 @@ namespace IdeaZoo.Presentation
             var cameraPosition = _camera.transform.position;
             var smallDistance = _lowTier ? 17f : Application.isMobilePlatform ? 24f : 34f;
             var mediumDistance = _lowTier ? 28f : Application.isMobilePlatform ? 38f : 55f;
-            var smallSquared = smallDistance * smallDistance;
-            var mediumSquared = mediumDistance * mediumDistance;
+            var landmarkDistance = _lowTier ? 54f : Application.isMobilePlatform ? 72f : 110f;
+            CullList(_smallDetails, cameraPosition, smallDistance * smallDistance, _lowTier);
+            CullList(_mediumDetails, cameraPosition, mediumDistance * mediumDistance, false);
+            CullList(_landmarks, cameraPosition, landmarkDistance * landmarkDistance, false);
+        }
 
-            for (var i = 0; i < _smallDetails.Count; i++)
+        private static void CullList(List<Renderer> renderers, Vector3 cameraPosition, float distanceSquared, bool stagger)
+        {
+            for (var i = 0; i < renderers.Count; i++)
             {
-                var renderer = _smallDetails[i];
+                var renderer = renderers[i];
                 if (renderer == null || !renderer.gameObject.activeInHierarchy) continue;
-                if (_lowTier && i % 3 == 2) { renderer.enabled = false; continue; }
-                renderer.enabled = (renderer.bounds.center - cameraPosition).sqrMagnitude <= smallSquared;
-            }
-            for (var i = 0; i < _mediumDetails.Count; i++)
-            {
-                var renderer = _mediumDetails[i];
-                if (renderer == null || !renderer.gameObject.activeInHierarchy) continue;
-                renderer.enabled = (renderer.bounds.center - cameraPosition).sqrMagnitude <= mediumSquared;
+                if (stagger && i % 3 == 2) { renderer.enabled = false; continue; }
+                renderer.enabled = (renderer.bounds.center - cameraPosition).sqrMagnitude <= distanceSquared;
             }
         }
 
@@ -123,7 +130,8 @@ namespace IdeaZoo.Presentation
                 var world = FindFirstObjectByType<WhisperGateWorld>();
                 var camera = FindFirstObjectByType<Camera>();
                 var art = FindFirstObjectByType<CivicWorldArtPass>();
-                if (world != null && camera != null && art != null)
+                var authored = FindFirstObjectByType<AuthoredEnvironmentPass>();
+                if (world != null && camera != null && art != null && authored != null)
                 {
                     yield return null;
                     var budget = world.GetComponent<MobilePresentationBudget>();

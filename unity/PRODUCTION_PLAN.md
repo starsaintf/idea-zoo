@@ -1,34 +1,42 @@
 # Production plan
 
-## Slice 1 — Whisper Gate
+## Slice 1 — Whisper Gate gameplay foundation — complete
 
-The current branch proves the full make-or-break loop with generated geometry. The acceptance gate is one complete case with a player-supplied idea, four evidence habitats, one Molt, one confirmed ruling, save/restart and stable mobile controls.
+The branch proves the full make-or-break loop with a player-supplied idea, four evidence habitats, one Molt, one confirmed ruling, save/restart and mobile controls.
 
-## Slice 2 — authored world kit
+## Slice 2 — modular civic-surrealism kit — implemented
 
-Replace generated architecture in this order:
+The current presentation pass now supplies:
 
-1. Whisper Gate intake chamber.
-2. Hatchery rotunda and incubation props.
-3. Desire Yard and Mara Rook workspace.
-4. Commitment Paddock and Toma Reed workspace.
-5. Burrower Tunnel and maintenance systems.
-6. Refusal Gate and White Room threshold.
-7. Molt House.
-8. Board Wing.
-9. Decision Garden.
+1. Shared paper, brass, clay, glass, ink, rust and moss surfaces.
+2. Layered façades, rails, pipes, workbenches, vitrines and banners.
+3. Department-specific dressing for Whisper Gate, Hatchery, Archive Walk, Desire Yard, Commitment Paddock, Burrower Tunnel, Refusal Gate, Molt House, Board Wing and Decision Garden.
+4. Environmental story language embedded into architecture.
+5. A Unity editor baker for district prefabs and a review scene.
+6. Distance culling, device tiers and adaptive render scale.
 
-Each kit needs mobile LODs, shared materials, lightmap UVs, collision proxies and occlusion volumes.
+Final external art assets can replace these modules without rewriting the game loop.
 
-## Slice 3 — characters and creatures
+## Slice 3 — characters and creatures — first production pass implemented
 
-Create one Keeper rig, Mara Rook and one modular creature family. Establish locomotion, gestures, facial states, hatching, feeding, fear, trust, Molt and ruling reactions before expanding the cast.
+The branch now includes:
 
-## Slice 4 — story direction
+- six animated specialist silhouettes with distinctive tools and posture;
+- a civic-field-coat Keeper presentation;
+- authored visual parts for Fleck, Hand, Mirror, Teeth, Swarm, Weather and Burrower specimens;
+- separate appetite markings for attention, data, money, trust, obedience, labour, care and time;
+- visible hidden burden and guardrail transformations;
+- evidence-driven definition while preserving authored proportions.
 
-Move hatching, Board interruption and ruling sequences into Timeline. Use Cinemachine for gameplay camera, inspection framing and story blends. Dialogue should remain short; environmental action carries the argument.
+The next character-art milestone is replacing procedural rigs with imported skeletal meshes, facial states and authored animation clips.
 
-## Slice 5 — device gate
+## Slice 4 — story direction — first production pass implemented
+
+Hatching, evidence inspection, Molt, Decision and ruling moments now use PlayableDirector camera sequences. A runtime Cinemachine bridge is enabled when the installed package exposes the expected camera API, with a direct-camera fallback so the sequence cannot block play.
+
+Procedural civic ambience and stage cues are also present. The next milestone is authored Timeline assets, voice performances, animation clips and final sound design.
+
+## Slice 5 — device gate — pending physical hardware
 
 A release candidate must pass on a physical iPhone:
 

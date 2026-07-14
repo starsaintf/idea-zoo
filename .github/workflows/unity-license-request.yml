@@ -18,18 +18,50 @@ jobs:
   request-license-file:
     name: Generate browser-activation request
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
-      - name: Generate Unity manual activation request
-        id: activation
-        uses: game-ci/unity-request-activation@v2
-        with:
-          unityVersion: 6000.5.0f1
+      - name: Generate Unity manual activation request in Docker
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p unity-license-output
+          image="unityci/editor:ubuntu-6000.5.0f1-base-3"
+          docker pull "$image"
+          docker run --rm \
+            --entrypoint /bin/bash \
+            -v "$PWD/unity-license-output:/license-output" \
+            "$image" -lc '
+              set +e
+              mkdir -p /tmp/unity-license-request
+              cd /tmp/unity-license-request
+              if [ -x /opt/unity/Editor/Unity ]; then
+                editor=/opt/unity/Editor/Unity
+              elif command -v unity-editor >/dev/null 2>&1; then
+                editor=$(command -v unity-editor)
+              else
+                editor=$(find /opt -type f -name Unity -perm -111 2>/dev/null | head -n 1)
+              fi
+              if [ -z "$editor" ]; then
+                echo "Unity Editor executable was not found in the GameCI image." >&2
+                exit 2
+              fi
+              "$editor" -batchmode -nographics -createManualActivationFile -logFile /dev/stdout
+              status=$?
+              find /tmp /root -type f -name "*.alf" -exec cp -v {} /license-output/ \; 2>/dev/null || true
+              count=$(find /license-output -maxdepth 1 -type f -name "*.alf" | wc -l)
+              if [ "$count" -lt 1 ]; then
+                echo "Unity did not generate a manual activation file; editor exit code: $status" >&2
+                exit 3
+              fi
+              exit 0
+            '
+          ls -la unity-license-output
       - name: Upload activation request
         uses: actions/upload-artifact@v4
         with:
           name: idea-zoo-unity-manual-activation-request
-          path: ${{ steps.activation.outputs.filePath }}
+          path: unity-license-output/*.alf
           if-no-files-found: error
       - name: Explain browser-only completion
         run: |

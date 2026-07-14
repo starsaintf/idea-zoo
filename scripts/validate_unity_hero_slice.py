@@ -51,9 +51,11 @@ checks = {
     "transparent surfaces are configured": all(token in texts[core.name] for token in (
         "_SURFACE_TYPE_TRANSPARENT", "RenderQueue.Transparent", "BlendMode.SrcAlpha", "BlendMode.OneMinusSrcAlpha"
     )) and "TransparentHeroSurfacesUseTransparentRendering" in texts[edit_tests.name],
-    "imported creature emission is enabled": "SetEmissionOnly" in texts[core.name]
+    "imported creature emission is enabled without implicit leaks": "SetEmissionOnly" in texts[core.name]
+        and "EmissionMaterialFor" in texts[core.name]
+        and "renderer.material" not in texts[core.name]
         and "HeroSliceUtility.SetEmissionOnly(renderer" in texts[performance.name]
-        and "ImportedCreatureEmissionEnablesShaderKeyword" in texts[edit_tests.name],
+        and "ImportedCreatureEmissionEnablesShaderKeywordWithoutRendererMaterialLeak" in texts[edit_tests.name],
     "manifest covers all creature families": "AllCreatureFamilies" in texts[editor.name]
         and "Manifest incorrectly narrows" in texts[edit_tests.name],
     "all mesh submeshes are counted": "for (var subMesh = 0; subMesh < mesh.subMeshCount; subMesh++)" in texts[core.name],

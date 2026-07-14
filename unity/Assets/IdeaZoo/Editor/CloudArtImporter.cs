@@ -2,7 +2,6 @@
 using System;
 using System.IO;
 using System.Linq;
-using IdeaZoo.CloudArt;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -30,14 +29,6 @@ namespace IdeaZoo.EditorTools
             importer.globalScale = 1f;
             importer.useFileScale = true;
         }
-    }
-
-    public sealed class CloudArtAssetMetadata : MonoBehaviour
-    {
-        public string AssetId;
-        public string Category;
-        public string ArtDirection = "Civic Surrealism";
-        public int SchemaVersion = 1;
     }
 
     public static class CloudArtPrefabBaker

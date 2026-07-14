@@ -7,9 +7,11 @@ on:
       - "unity/Assets/IdeaZoo/HeroSlice/**"
       - "unity/Assets/IdeaZoo/Editor/HeroSlice/**"
       - "unity/Assets/IdeaZoo/Tests/EditMode/HeroSliceEditorTests.cs"
+      - "unity/Assets/IdeaZoo/Tests/PlayMode/IdeaZooCloudPlayModeTests.cs"
       - "unity/HERO_SLICE_PRODUCTION.md"
       - "scripts/validate_unity_hero_slice.py"
       - ".github/workflows/unity-hero-slice.yml"
+      - ".github/workflows/unity-cloud-integration.yml"
 
 jobs:
   source-contract:

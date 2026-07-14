@@ -42,6 +42,7 @@ namespace IdeaZoo.Runtime
         private Text _metrics;
         private Text _progress;
         private Text _prompt;
+        private GameObject _promptPanel;
         private Text _inlineError;
         private string _currentTest = string.Empty;
         private int _selectedStrength = -1;
@@ -213,7 +214,7 @@ namespace IdeaZoo.Runtime
         {
             if (_prompt == null) return;
             _prompt.text = value;
-            _prompt.gameObject.SetActive(!string.IsNullOrWhiteSpace(value) && !OverlayOpen);
+            _promptPanel.SetActive(!string.IsNullOrWhiteSpace(value) && !OverlayOpen);
         }
 
         public void CloseOverlay()
@@ -251,16 +252,16 @@ namespace IdeaZoo.Runtime
             _progress = Label("Progress", panel.transform, "0 / 4", 14, Paper, TextAnchor.MiddleRight);
             _progress.gameObject.AddComponent<LayoutElement>().preferredWidth = 56f;
 
-            var promptPanel = Panel("Prompt", _safeRoot.transform, new Color(0.02f, 0.05f, 0.06f, 0.90f), Brass);
-            var promptRect = promptPanel.GetComponent<RectTransform>();
+            _promptPanel = Panel("Prompt", _safeRoot.transform, new Color(0.02f, 0.05f, 0.06f, 0.90f), Brass);
+            var promptRect = _promptPanel.GetComponent<RectTransform>();
             promptRect.anchorMin = new Vector2(0.23f, 0f);
             promptRect.anchorMax = new Vector2(0.77f, 0f);
             promptRect.pivot = new Vector2(0.5f, 0f);
             promptRect.offsetMin = new Vector2(0f, 18f);
             promptRect.offsetMax = new Vector2(0f, 66f);
-            _prompt = Label("PromptText", promptPanel.transform, string.Empty, 15, Paper, TextAnchor.MiddleCenter);
+            _prompt = Label("PromptText", _promptPanel.transform, string.Empty, 15, Paper, TextAnchor.MiddleCenter);
             Stretch(_prompt.rectTransform);
-            promptPanel.SetActive(false);
+            _promptPanel.SetActive(false);
         }
 
         private void BuildTouchControls()
@@ -402,7 +403,11 @@ namespace IdeaZoo.Runtime
             _inlineError = null;
             _currentTest = string.Empty;
             _selectedStrength = -1;
-            foreach (Transform child in _overlayContent) Destroy(child.gameObject);
+            foreach (Transform child in _overlayContent)
+            {
+                child.gameObject.SetActive(false);
+                Destroy(child.gameObject);
+            }
             _overlayContent.anchoredPosition = Vector2.zero;
         }
 

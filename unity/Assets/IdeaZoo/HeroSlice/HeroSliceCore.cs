@@ -1,10 +1,7 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
-using IdeaZoo.Characters;
-using IdeaZoo.Core;
-using IdeaZoo.Presentation;
 using IdeaZoo.Runtime;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -29,13 +26,12 @@ namespace IdeaZoo.HeroSlice
         Transformed
     }
 
-    [DefaultExecutionOrder(-900)]
     public static class HeroSliceAutoInstaller
     {
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Install()
         {
-            if (UnityEngine.Object.FindFirstObjectByType<CinematicHeroSliceDirector>() != null) return;
+            if (UnityEngine.Object.FindAnyObjectByType<CinematicHeroSliceDirector>() != null) return;
             var root = new GameObject("CINEMATIC_HERO_SLICE");
             root.AddComponent<CinematicHeroSliceDirector>();
         }
@@ -57,11 +53,11 @@ namespace IdeaZoo.HeroSlice
         public HeroWorldProductionPass WorldPass { get { return _world; } }
         public HeroCreatureTransformationDirector CreaturePass { get { return _creature; } }
 
-        private IEnumerator Start()
+        private System.Collections.IEnumerator Start()
         {
             for (var frame = 0; frame < 600; frame++)
             {
-                _game = FindFirstObjectByType<IdeaZooGame>();
+                _game = FindAnyObjectByType<IdeaZooGame>();
                 if (_game != null && _game.World != null && _game.Keeper != null && _game.Creature != null) break;
                 yield return null;
             }
@@ -98,33 +94,12 @@ namespace IdeaZoo.HeroSlice
             RenderSettings.fogColor = new Color(0.025f, 0.055f, 0.095f);
             RenderSettings.fogDensity = Application.isMobilePlatform ? 0.0045f : 0.0065f;
 
-            var camera = FindFirstObjectByType<Camera>();
+            var camera = FindAnyObjectByType<Camera>();
             if (camera != null)
             {
                 camera.backgroundColor = new Color(0.008f, 0.018f, 0.035f);
                 camera.allowHDR = true;
                 camera.fieldOfView = Mathf.Clamp(camera.fieldOfView, 50f, 58f);
-            }
-        }
-    }
-
-    [DisallowMultipleComponent]
-    public sealed class HeroSliceReviewBootstrap : MonoBehaviour
-    {
-        public HeroDistrictId District = HeroDistrictId.ZooEntrance;
-        public bool AutoFrame = true;
-
-        private IEnumerator Start()
-        {
-            for (var i = 0; i < 600; i++)
-            {
-                var director = FindFirstObjectByType<CinematicHeroSliceDirector>();
-                if (director != null && director.Installed && director.WorldPass != null)
-                {
-                    if (AutoFrame) director.WorldPass.FrameDistrict(District);
-                    yield break;
-                }
-                yield return null;
             }
         }
     }
@@ -138,13 +113,6 @@ namespace IdeaZoo.HeroSlice
             if (root == null) return null;
             return root.GetComponentsInChildren<Transform>(true)
                 .FirstOrDefault(item => string.Equals(item.name, name, StringComparison.Ordinal));
-        }
-
-        public static Transform FindContains(Transform root, string token)
-        {
-            if (root == null) return null;
-            return root.GetComponentsInChildren<Transform>(true)
-                .FirstOrDefault(item => item.name.IndexOf(token, StringComparison.OrdinalIgnoreCase) >= 0);
         }
 
         public static Transform NewRoot(Transform parent, string name, Vector3 localPosition)
@@ -177,21 +145,23 @@ namespace IdeaZoo.HeroSlice
             var renderer = node.GetComponent<Renderer>();
             if (renderer != null)
             {
-                renderer.sharedMaterial = MaterialFor(name, color, metallic, smoothness);
+                renderer.sharedMaterial = MaterialFor(color, metallic, smoothness);
                 renderer.shadowCastingMode = castShadows ? ShadowCastingMode.On : ShadowCastingMode.Off;
                 renderer.receiveShadows = castShadows;
             }
             return node;
         }
 
-        public static Material MaterialFor(string key, Color color, float metallic, float smoothness)
+        public static Material MaterialFor(Color color, float metallic, float smoothness)
         {
-            var cacheKey = key + "|" + ColorUtility.ToHtmlStringRGBA(color) + "|" + metallic.ToString("0.00") + "|" + smoothness.ToString("0.00");
+            var cacheKey = ColorUtility.ToHtmlStringRGBA(color)
+                           + "|" + metallic.ToString("0.000", CultureInfo.InvariantCulture)
+                           + "|" + smoothness.ToString("0.000", CultureInfo.InvariantCulture);
             Material material;
             if (Materials.TryGetValue(cacheKey, out material) && material != null) return material;
 
             var shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
-            material = new Material(shader) { name = "IZ_Hero_" + key };
+            material = new Material(shader) { name = "IZ_Hero_Surface_" + cacheKey };
             if (material.HasProperty("_BaseColor")) material.SetColor("_BaseColor", color);
             if (material.HasProperty("_Color")) material.SetColor("_Color", color);
             if (material.HasProperty("_Metallic")) material.SetFloat("_Metallic", metallic);
@@ -244,6 +214,7 @@ namespace IdeaZoo.HeroSlice
             var practical = node.AddComponent<HeroPracticalLight>();
             practical.PeakIntensity = intensity;
             practical.ActivationDistance = Mathf.Max(12f, range * 2.6f);
+            practical.MaximumActivationDistance = practical.ActivationDistance;
             return light;
         }
 
@@ -290,9 +261,18 @@ namespace IdeaZoo.HeroSlice
             if (root == null) return 0;
             var count = 0;
             foreach (var filter in root.GetComponentsInChildren<MeshFilter>(true))
-                if (filter.sharedMesh != null) count += (int)(filter.sharedMesh.GetIndexCount(0) / 3);
+                count += MeshTriangleCount(filter.sharedMesh);
             foreach (var skin in root.GetComponentsInChildren<SkinnedMeshRenderer>(true))
-                if (skin.sharedMesh != null) count += (int)(skin.sharedMesh.GetIndexCount(0) / 3);
+                count += MeshTriangleCount(skin.sharedMesh);
+            return count;
+        }
+
+        private static int MeshTriangleCount(Mesh mesh)
+        {
+            if (mesh == null) return 0;
+            var count = 0;
+            for (var subMesh = 0; subMesh < mesh.subMeshCount; subMesh++)
+                count += (int)(mesh.GetIndexCount(subMesh) / 3);
             return count;
         }
     }
@@ -302,6 +282,7 @@ namespace IdeaZoo.HeroSlice
     {
         public float PeakIntensity = 2f;
         public float ActivationDistance = 24f;
+        public float MaximumActivationDistance = 24f;
         public float FlickerAmount = 0.08f;
         public float FlickerSpeed = 2.3f;
 
@@ -313,12 +294,23 @@ namespace IdeaZoo.HeroSlice
         {
             _light = GetComponent<Light>();
             _phase = Mathf.Abs(name.GetHashCode() % 1000) * 0.01f;
+            MaximumActivationDistance = Mathf.Max(ActivationDistance, MaximumActivationDistance);
+        }
+
+        public void ReduceForPressure(float amount)
+        {
+            ActivationDistance = Mathf.Max(12f, ActivationDistance - Mathf.Max(0f, amount));
+        }
+
+        public void RecoverFromPressure(float amount)
+        {
+            ActivationDistance = Mathf.Min(MaximumActivationDistance, ActivationDistance + Mathf.Max(0f, amount));
         }
 
         private void Update()
         {
             if (_light == null) return;
-            if (_camera == null) _camera = Camera.main ?? FindFirstObjectByType<Camera>();
+            if (_camera == null) _camera = Camera.main ?? FindAnyObjectByType<Camera>();
             if (_camera == null) return;
             var distance = Vector3.Distance(_camera.transform.position, transform.position);
             _light.enabled = distance <= ActivationDistance;

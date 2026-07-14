@@ -14,4 +14,4 @@ This directory is the authoritative character and creature design handoff.
 
 Validation is executed entirely in the cloud: Blender generation first, then licensed Unity import, prefab baking, EditMode, PlayMode and WebGL review.
 
-The generated package contains 17 validated assets and is now entering the licensed Unity import gate.
+The committed package contains 17 proportion-safe rigged assets generated from an empty output directory. This synchronization commit runs the licensed Unity gate against those exact FBX files.

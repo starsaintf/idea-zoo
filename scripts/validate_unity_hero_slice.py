@@ -52,7 +52,10 @@ checks = {
         "_SURFACE_TYPE_TRANSPARENT", "RenderQueue.Transparent", "BlendMode.SrcAlpha", "BlendMode.OneMinusSrcAlpha"
     )) and "TransparentHeroSurfacesUseTransparentRendering" in texts[edit_tests.name],
     "imported creature emission is enabled": "SetEmissionOnly" in texts[core.name]
-        and "HeroSliceUtility.SetEmissionOnly(renderer" in texts[performance.name],
+        and "HeroSliceUtility.SetEmissionOnly(renderer" in texts[performance.name]
+        and "ImportedCreatureEmissionEnablesShaderKeyword" in texts[edit_tests.name],
+    "manifest covers all creature families": "AllCreatureFamilies" in texts[editor.name]
+        and "Manifest incorrectly narrows" in texts[edit_tests.name],
     "all mesh submeshes are counted": "for (var subMesh = 0; subMesh < mesh.subMeshCount; subMesh++)" in texts[core.name],
     "four review scenes": "BakeReviewScenes" in texts[editor.name] and "HeroDistrictId" in texts[editor.name],
     "serialization-safe anchors": "CinematicHeroSlicePrefabAnchor" in texts[editor.name]

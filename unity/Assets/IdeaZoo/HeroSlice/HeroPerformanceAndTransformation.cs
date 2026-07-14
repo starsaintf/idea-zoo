@@ -139,6 +139,8 @@ namespace IdeaZoo.HeroSlice
         private HeroCreatureStage _stage = (HeroCreatureStage)(-1);
         private string _recordId = string.Empty;
         private float _phase;
+        private float _stageScale = 1f;
+        private Vector3 _visualBaseScale = Vector3.one;
 
         public HeroCreatureStage Stage { get { return _stage; } }
 
@@ -186,6 +188,7 @@ namespace IdeaZoo.HeroSlice
 
             if (!force && candidate == _visual && id == _recordId) return;
             _visual = candidate;
+            _visualBaseScale = _visual != null ? _visual.localScale : Vector3.one;
             _recordId = id;
             if (_layer != null) Destroy(_layer.gameObject);
             _stageRenderers.Clear();
@@ -287,7 +290,8 @@ namespace IdeaZoo.HeroSlice
                 }
             }
 
-            transform.localScale = Vector3.one * StageScale(stage, safety);
+            _stageScale = StageScale(stage, safety);
+            if (_visual != null) _visual.localScale = _visualBaseScale * _stageScale;
         }
 
         private void AnimateStage(IdeaProfile profile)
@@ -296,7 +300,7 @@ namespace IdeaZoo.HeroSlice
             var safety = Mathf.Clamp01((float)profile.Metrics.Safety);
             var speed = 1.2f + evidence * 1.4f + (1f - safety) * 1.2f;
             var pulse = 1f + Mathf.Sin(Time.time * speed + _phase) * (0.025f + (1f - safety) * 0.03f);
-            if (_layer != null) _layer.localScale = Vector3.one * pulse;
+            if (_layer != null) _layer.localScale = Vector3.one * (_stageScale * pulse);
 
             var halos = _layer.GetComponentsInChildren<Transform>(true)
                 .Where(item => item.name.StartsWith("EvidenceHalo_", StringComparison.Ordinal)).ToArray();

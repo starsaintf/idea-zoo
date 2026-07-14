@@ -22,14 +22,15 @@ The Keeper and Mara Rook now react to case progression rather than remaining dec
 - risk changes Mara’s protective behavior;
 - Molt and decision stages change emotional posture;
 - Build, Molt, and Sanctuary rulings produce hopeful beats;
-- Hibernate and Break rulings produce subdued, concerned, or grieving beats;
+- Hibernate produces a subdued, watchful response rather than grief;
+- Break produces grieving and refusal beats;
 - burdened specimens produce concern and refusal beats.
 
 The existing `CharacterPerformanceRig` remains the shared contract, so final hero geometry and bespoke animation can replace the current meshes without rewriting story logic.
 
 ## Creature transformation language
 
-The hero creature has six visible narrative stages:
+Every supported creature family can use the six visible narrative stages:
 
 1. **Unproven**
 2. **Observed**
@@ -46,7 +47,7 @@ This replaces the old “mostly recolor the creature” presentation with a visi
 
 ## Cinematic sequencing
 
-The pass shares the existing `PresentationCameraRig` and Timeline-compatible presentation layer. The original presentation director remains the single owner of hatch, evidence, Molt, decision, and final-ruling shots. The hero layer adds only unique visual beats, such as burden escalation, so two directors cannot restart the same shot or fight for the camera.
+The pass shares the existing `PresentationCameraRig` and Timeline-compatible presentation layer. The original presentation director remains the single owner of hatch, evidence, Molt, decision, and final-ruling shots. The hero layer adds only unique visual beats, such as burden escalation. A unique hero beat is queued until the shared camera rig is idle, preventing it from cancelling or restarting the standard evidence shot.
 
 A cooldown prevents repeated camera interruptions during normal movement.
 
@@ -60,7 +61,8 @@ The pass respects the existing **Eco 30, Balanced 45, and Quality 60** profiles 
 - hero-only pressure reduction and recovery without overriding global quality settings;
 - fixed particle budgets;
 - hero-light, hero-particle, and all-submesh triangle audits;
-- shared surface materials to preserve batching and reduce memory pressure;
+- shared opaque and transparent surface materials where their full material properties match;
+- correctly configured transparent glass surfaces;
 - retained low-poly models as LODs, crowd assets, distant silhouettes, and fallbacks.
 
 ## Concept art versus runtime art
@@ -74,7 +76,7 @@ The current cloud-generated hero geometry is still a stylized production baselin
 The production pass adds:
 
 - a static source and inconsistency contract;
-- editor import and material-sharing coverage;
+- editor import, transparency, emission, ruling-semantics, manifest-scope, and material-sharing coverage;
 - runtime PlayMode checks for automatic installation, all four districts, transformation systems, and single camera ownership;
 - a runtime prefab baker;
 - four review-scene bakers;

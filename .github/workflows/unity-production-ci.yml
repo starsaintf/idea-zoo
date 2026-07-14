@@ -6,12 +6,14 @@ on:
     paths:
       - "unity/**"
       - "scripts/validate_unity_foundation.py"
+      - "scripts/validate_unity_cloud_environment.py"
       - ".github/workflows/unity-production-ci.yml"
   pull_request:
     branches: [main]
     paths:
       - "unity/**"
       - "scripts/validate_unity_foundation.py"
+      - "scripts/validate_unity_cloud_environment.py"
       - ".github/workflows/unity-production-ci.yml"
   workflow_dispatch:
 
@@ -33,11 +35,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Validate production project structure and source contracts
+      - name: Validate production, cloud and environment contracts
         shell: bash
         run: |
           set +e
-          python3 scripts/validate_unity_foundation.py 2>&1 | tee unity-validation-report.txt
+          {
+            python3 scripts/validate_unity_foundation.py
+            foundation=$?
+            python3 scripts/validate_unity_cloud_environment.py
+            environment=$?
+            if [ "$foundation" -ne 0 ] || [ "$environment" -ne 0 ]; then
+              exit 1
+            fi
+          } 2>&1 | tee unity-validation-report.txt
           status=${PIPESTATUS[0]}
           {
             echo '## Unity validation report'
@@ -57,7 +67,14 @@ jobs:
           test ! -d .unity-bootstrap
           ! git ls-files | grep -E '(^|/)chunk-[0-9]+$|bootstrap-unity-source'
       - name: Package reviewable Unity source
-        run: zip -qr idea-zoo-unity-production-source.zip unity scripts/validate_unity_foundation.py .github/workflows/unity-production-ci.yml
+        run: |
+          zip -qr idea-zoo-unity-production-source.zip \
+            unity \
+            scripts/validate_unity_foundation.py \
+            scripts/validate_unity_cloud_environment.py \
+            .github/workflows/unity-production-ci.yml \
+            .github/workflows/unity-cloud-integration.yml \
+            .github/workflows/unity-license-request.yml
       - uses: actions/upload-artifact@v4
         with:
           name: idea-zoo-unity-production-source

@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using IdeaZoo.Runtime;
 using UnityEngine;
 
@@ -23,6 +22,7 @@ namespace IdeaZoo.HeroSlice
         private static readonly Color EvidenceBlue = new Color(0.18f, 0.52f, 1f);
 
         public bool Built { get { return _built; } }
+        public Transform HeroRoot { get { return _root; } }
 
         public void Build(WhisperGateWorld world)
         {
@@ -56,20 +56,24 @@ namespace IdeaZoo.HeroSlice
         public void FrameDistrict(HeroDistrictId district)
         {
             var target = District(district);
-            var camera = FindFirstObjectByType<Camera>();
+            var camera = FindAnyObjectByType<Camera>();
             if (target == null || camera == null) return;
 
-            var offsets = new Dictionary<HeroDistrictId, Vector3>
-            {
-                { HeroDistrictId.ZooEntrance, new Vector3(0f, 7.5f, 18f) },
-                { HeroDistrictId.LanternFields, new Vector3(9f, 5.2f, 10f) },
-                { HeroDistrictId.SilentStacks, new Vector3(-10f, 5.5f, 9f) },
-                { HeroDistrictId.EvidenceForge, new Vector3(12f, 8f, 13f) },
-            };
-
-            var offset = offsets[district];
+            var offset = DistrictCameraOffset(district);
             camera.transform.position = target.position + offset;
             camera.transform.rotation = Quaternion.LookRotation((target.position + Vector3.up * 2.2f - camera.transform.position).normalized, Vector3.up);
+        }
+
+        private static Vector3 DistrictCameraOffset(HeroDistrictId district)
+        {
+            switch (district)
+            {
+                case HeroDistrictId.ZooEntrance: return new Vector3(0f, 7.5f, 18f);
+                case HeroDistrictId.LanternFields: return new Vector3(9f, 5.2f, 10f);
+                case HeroDistrictId.SilentStacks: return new Vector3(-10f, 5.5f, 9f);
+                case HeroDistrictId.EvidenceForge: return new Vector3(12f, 8f, 13f);
+                default: return new Vector3(0f, 6f, 12f);
+            }
         }
 
         private void IndexDistricts()

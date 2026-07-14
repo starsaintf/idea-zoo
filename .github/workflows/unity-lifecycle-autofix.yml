@@ -1,0 +1,88 @@
+name: Unity lifecycle autofix
+
+on:
+  push:
+    branches: [unity-production-v1]
+    paths:
+      - ".github/workflows/unity-lifecycle-autofix.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  patch-runtime-and-baker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: unity-production-v1
+          fetch-depth: 0
+
+      - name: Split serializable specialist and make authored boot deterministic
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          root = Path('unity/Assets/IdeaZoo')
+          staff_path = root / 'Presentation/StaffEnsemble.cs'
+          staff = staff_path.read_text()
+          start = '    [DisallowMultipleComponent]\n    public sealed class ProceduralSpecialist : MonoBehaviour\n'
+          next_class = '    [DisallowMultipleComponent]\n    public sealed class StaffEnsemble : MonoBehaviour\n'
+          if start in staff:
+              a = staff.index(start)
+              b = staff.index(next_class, a)
+              specialist = staff[a:b]
+              specialist = specialist.replace(
+                  'if (collider != null) Object.Destroy(collider);',
+                  'if (collider != null) { if (Application.isPlaying) Object.Destroy(collider); else Object.DestroyImmediate(collider); }'
+              )
+              new_file = 'using UnityEngine;\n\nnamespace IdeaZoo.Presentation\n{\n' + specialist + '}\n'
+              (root / 'Presentation/ProceduralSpecialist.cs').write_text(new_file)
+              staff_path.write_text(staff[:a] + staff[b:])
+
+          # Deterministically create the authored kit during the main world boot.
+          game_path = root / 'Runtime/IdeaZooGame.cs'
+          game = game_path.read_text()
+          if 'using IdeaZoo.Presentation;' not in game:
+              game = game.replace('using IdeaZoo.Core;\n', 'using IdeaZoo.Core;\nusing IdeaZoo.Presentation;\n', 1)
+          old = '            _world = worldObject.AddComponent<WhisperGateWorld>();\n            _world.Build();\n'
+          new = '''            _world = worldObject.AddComponent<WhisperGateWorld>();
+            _world.Build();
+            var authored = worldObject.GetComponent<AuthoredEnvironmentPass>();
+            if (authored == null) authored = worldObject.AddComponent<AuthoredEnvironmentPass>();
+            authored.Build(worldObject.transform);
+'''
+          if old in game and 'authored.Build(worldObject.transform);' not in game:
+              game = game.replace(old, new, 1)
+          game_path.write_text(game)
+
+          # All procedural construction used by the Editor baker must destroy primitive colliders immediately.
+          for path in (root / 'Presentation').glob('*.cs'):
+              source = path.read_text()
+              source = source.replace(
+                  'if (collider != null) Object.Destroy(collider);',
+                  'if (collider != null) { if (Application.isPlaying) Object.Destroy(collider); else Object.DestroyImmediate(collider); }'
+              )
+              source = source.replace(
+                  'if (collider != null) Destroy(collider);',
+                  'if (collider != null) { if (Application.isPlaying) Destroy(collider); else DestroyImmediate(collider); }'
+              )
+              path.write_text(source)
+          PY
+
+      - name: Commit lifecycle patch
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo "Lifecycle patch was already applied."
+            exit 0
+          fi
+          git config user.name "Idea Zoo Cloud Fix"
+          git config user.email "actions@users.noreply.github.com"
+          git add unity/Assets/IdeaZoo/Runtime/IdeaZooGame.cs \
+                  unity/Assets/IdeaZoo/Presentation/StaffEnsemble.cs \
+                  unity/Assets/IdeaZoo/Presentation/ProceduralSpecialist.cs \
+                  unity/Assets/IdeaZoo/Presentation/*.cs
+          git commit -m "fix(unity): serialize specialists and deterministically boot authored world"
+          git push origin HEAD:unity-production-v1

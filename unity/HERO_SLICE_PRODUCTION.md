@@ -4,7 +4,7 @@ This production pass upgrades the playable Unity project from a functional styli
 
 ## Implemented in the runtime
 
-The pass installs automatically after the main scene loads. It preserves the existing Idea Zoo world, cloud-generated characters, creature rigs, gameplay, and procedural fallbacks, then adds a premium presentation layer over them.
+The pass installs automatically after the main scene loads. It preserves the existing Idea Zoo world, cloud-generated characters, creature rigs, gameplay, mobile quality profiles, and procedural fallbacks, then adds a premium presentation layer over them.
 
 The four hero districts are:
 
@@ -21,7 +21,8 @@ The Keeper and Mara Rook now react to case progression rather than remaining dec
 - evidence discoveries trigger inspect/explain gestures;
 - risk changes Mara’s protective behavior;
 - Molt and decision stages change emotional posture;
-- trusted or transformed specimens produce hopeful beats;
+- Build, Molt, and Sanctuary rulings produce hopeful beats;
+- Hibernate and Break rulings produce subdued, concerned, or grieving beats;
 - burdened specimens produce concern and refusal beats.
 
 The existing `CharacterPerformanceRig` remains the shared contract, so final hero geometry and bespoke animation can replace the current meshes without rewriting story logic.
@@ -39,18 +40,13 @@ The hero creature has six visible narrative stages:
 
 The stage is derived from real case state: evidence, completed tests, safety, assumptions, guardrails, ruling, and current campaign stage. Each stage changes scale, emission, evidence halos, trust fins, burden shards, light intensity, motion, and cinematic response.
 
+The final Transformed stage is ruling-sensitive. Build, Molt, and Sanctuary retain a luminous evolved state; Hibernate becomes muted and dormant; Break becomes dimmer, smaller, and visibly fractured.
+
 This replaces the old “mostly recolor the creature” presentation with a visible consequence system.
 
 ## Cinematic sequencing
 
-The pass uses the existing `PresentationCameraRig` and Timeline-compatible presentation layer for:
-
-- first hatch;
-- evidence discovery;
-- burden escalation;
-- Molt entry;
-- decision reveal;
-- final ruling.
+The pass shares the existing `PresentationCameraRig` and Timeline-compatible presentation layer. The original presentation director remains the single owner of hatch, evidence, Molt, decision, and final-ruling shots. The hero layer adds only unique visual beats, such as burden escalation, so two directors cannot restart the same shot or fight for the camera.
 
 A cooldown prevents repeated camera interruptions during normal movement.
 
@@ -58,13 +54,13 @@ A cooldown prevents repeated camera interruptions during normal movement.
 
 This is designed as **AA/AAA cinematic stylisation for mobile**, not a promise that a phone will render film-quality concept art literally in real time.
 
-The pass enforces:
+The pass respects the existing **Eco 30, Balanced 45, and Quality 60** profiles rather than replacing them with one global frame-rate target. It adds:
 
-- 30 FPS mobile target and 60 FPS desktop/WebGL target;
-- dynamic practical-light distance culling;
-- adaptive shadow-distance reduction when sustained FPS drops;
+- dynamic distance culling for hero practical lights;
+- hero-only pressure reduction and recovery without overriding global quality settings;
 - fixed particle budgets;
-- a visible-triangle audit;
+- hero-light, hero-particle, and all-submesh triangle audits;
+- shared surface materials to preserve batching and reduce memory pressure;
 - retained low-poly models as LODs, crowd assets, distant silhouettes, and fallbacks.
 
 ## Concept art versus runtime art
@@ -77,12 +73,14 @@ The current cloud-generated hero geometry is still a stylized production baselin
 
 The production pass adds:
 
-- a static source contract;
-- editor import coverage;
+- a static source and inconsistency contract;
+- editor import and material-sharing coverage;
+- runtime PlayMode checks for automatic installation, all four districts, transformation systems, and single camera ownership;
 - a runtime prefab baker;
 - four review-scene bakers;
 - exact transformation-stage checks;
-- the existing licensed Unity EditMode, PlayMode, presentation-asset, and WebGL build gates.
+- explicit verification and artifact upload for the hero prefab, manifest, and all four hero review scenes;
+- the licensed Unity EditMode, PlayMode, presentation-asset, and WebGL build gates.
 
 Run the Unity menu command:
 

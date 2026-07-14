@@ -107,7 +107,7 @@ namespace IdeaZoo.HeroSlice
     public static class HeroSliceUtility
     {
         private static readonly Dictionary<string, Material> Materials = new Dictionary<string, Material>(StringComparer.Ordinal);
-        private static readonly Dictionary<string, Material> EmissionMaterials = new Dictionary<string, Material>(StringComparer.Ordinal);
+        private static readonly Dictionary<string, Material> EmissionReadyMaterials = new Dictionary<string, Material>(StringComparer.Ordinal);
 
         public static Transform FindDeep(Transform root, string name)
         {
@@ -175,40 +175,41 @@ namespace IdeaZoo.HeroSlice
 
         public static void SetEmission(Renderer renderer, Color color, float intensity)
         {
-            if (renderer == null || renderer.sharedMaterial == null) return;
-            renderer.sharedMaterial = EmissionMaterialFor(renderer.sharedMaterial, color, intensity, true);
+            ApplyEmission(renderer, color, intensity, true);
         }
 
         public static void SetEmissionOnly(Renderer renderer, Color color, float intensity)
         {
-            if (renderer == null || renderer.sharedMaterial == null) return;
-            renderer.sharedMaterial = EmissionMaterialFor(renderer.sharedMaterial, color, intensity, false);
+            ApplyEmission(renderer, color, intensity, false);
         }
 
-        private static Material EmissionMaterialFor(Material source, Color color, float intensity, bool tintBase)
+        private static void ApplyEmission(Renderer renderer, Color color, float intensity, bool tintBase)
         {
-            if (source == null) return null;
-            var clampedIntensity = Mathf.Max(0f, intensity);
-            var cacheKey = source.GetEntityId().ToString()
-                           + "|" + ColorUtility.ToHtmlStringRGBA(color)
-                           + "|" + clampedIntensity.ToString("0.000", CultureInfo.InvariantCulture)
-                           + "|" + (tintBase ? "tint" : "emission-only");
-            Material material;
-            if (EmissionMaterials.TryGetValue(cacheKey, out material) && material != null) return material;
+            if (renderer == null || renderer.sharedMaterial == null) return;
+            renderer.sharedMaterial = EmissionReadyMaterialFor(renderer.sharedMaterial);
 
-            material = new Material(source) { name = source.name + "_HeroEmission_" + cacheKey };
-            if (material.HasProperty("_EmissionColor"))
-            {
-                material.EnableKeyword("_EMISSION");
-                material.SetColor("_EmissionColor", color * clampedIntensity);
-            }
+            var block = new MaterialPropertyBlock();
+            renderer.GetPropertyBlock(block);
+            block.SetColor("_EmissionColor", color * Mathf.Max(0f, intensity));
             if (tintBase)
             {
                 var tint = Color.Lerp(color * 0.22f, color, 0.45f);
-                if (material.HasProperty("_BaseColor")) material.SetColor("_BaseColor", tint);
-                if (material.HasProperty("_Color")) material.SetColor("_Color", tint);
+                block.SetColor("_BaseColor", tint);
+                block.SetColor("_Color", tint);
             }
-            EmissionMaterials[cacheKey] = material;
+            renderer.SetPropertyBlock(block);
+        }
+
+        private static Material EmissionReadyMaterialFor(Material source)
+        {
+            if (source == null || !source.HasProperty("_EmissionColor") || source.IsKeywordEnabled("_EMISSION")) return source;
+            var cacheKey = source.GetEntityId().ToString();
+            Material material;
+            if (EmissionReadyMaterials.TryGetValue(cacheKey, out material) && material != null) return material;
+
+            material = new Material(source) { name = source.name + "_HeroEmissionReady" };
+            material.EnableKeyword("_EMISSION");
+            EmissionReadyMaterials[cacheKey] = material;
             return material;
         }
 

@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using IdeaZoo.Core;
+using IdeaZoo.Presentation;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -104,6 +105,9 @@ namespace IdeaZoo.Runtime
             worldObject.transform.SetParent(transform, false);
             _world = worldObject.AddComponent<WhisperGateWorld>();
             _world.Build();
+            var authored = worldObject.GetComponent<AuthoredEnvironmentPass>();
+            if (authored == null) authored = worldObject.AddComponent<AuthoredEnvironmentPass>();
+            authored.Build(worldObject.transform);
         }
 
         private void BuildKeeper()

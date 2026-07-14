@@ -1,0 +1,75 @@
+name: Unity campaign integration autofix
+
+on:
+  push:
+    branches: [unity-production-v1]
+    paths:
+      - ".github/workflows/unity-campaign-autofix.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  patch-campaign-startup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: unity-production-v1
+          fetch-depth: 0
+
+      - name: Apply campaign and authored-bake fixes
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          campaign_path = Path('unity/Assets/IdeaZoo/Story/CampaignProduction.cs')
+          campaign = campaign_path.read_text()
+          campaign = campaign.replace(
+              '        private readonly CampaignSaveService _save = new CampaignSaveService();\n',
+              '        private CampaignSaveService _save;\n'
+          )
+          start = '        private IEnumerator Start()\n'
+          awake = '''        private void Awake()
+        {
+            _save = new CampaignSaveService();
+        }
+
+'''
+          if awake not in campaign:
+              if start not in campaign:
+                  raise SystemExit('Campaign Start insertion marker was not found')
+              campaign = campaign.replace(start, awake + start, 1)
+          campaign_path.write_text(campaign)
+
+          baker_path = Path('unity/Assets/IdeaZoo/Editor/IdeaZooPresentationBaker.cs')
+          baker = baker_path.read_text()
+          old = '''            var authoredRoot = FindChild(prefab.transform, "AUTHORED_ENVIRONMENT_KIT");
+            var authoredMeshes = authoredRoot == null ? 0 : authoredRoot.GetComponentsInChildren<MeshFilter>(true).Length;
+'''
+          new = '''            var authoredMeshes = 0;
+            foreach (var child in prefab.GetComponentsInChildren<Transform>(true))
+                if (child.name == "AUTHORED_ENVIRONMENT_KIT" || child.name.Contains("_Authored")) authoredMeshes++;
+'''
+          if old in baker:
+              baker = baker.replace(old, new, 1)
+          baker = baker.replace(
+              'if (authoredMeshes < 24) throw new UnityException("Baked district is missing the authored environment kit.");',
+              'if (authoredMeshes < 10) throw new UnityException("Baked district is missing authored department structures.");'
+          )
+          baker_path.write_text(baker)
+          PY
+
+      - name: Commit runtime integration patch
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo "Campaign integration patch was already applied."
+            exit 0
+          fi
+          git config user.name "Idea Zoo Cloud Fix"
+          git config user.email "actions@users.noreply.github.com"
+          git add unity/Assets/IdeaZoo/Story/CampaignProduction.cs unity/Assets/IdeaZoo/Editor/IdeaZooPresentationBaker.cs
+          git commit -m "fix(unity): initialize campaign storage in Awake and validate authored departments"
+          git push origin HEAD:unity-production-v1

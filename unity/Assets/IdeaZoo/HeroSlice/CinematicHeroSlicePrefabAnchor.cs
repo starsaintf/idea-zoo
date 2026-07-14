@@ -10,7 +10,7 @@ namespace IdeaZoo.HeroSlice
         private void Awake()
         {
             if (!InstallOnAwake) return;
-            if (FindFirstObjectByType<CinematicHeroSliceDirector>() != null) return;
+            if (FindAnyObjectByType<CinematicHeroSliceDirector>() != null) return;
             gameObject.AddComponent<CinematicHeroSliceDirector>();
         }
     }

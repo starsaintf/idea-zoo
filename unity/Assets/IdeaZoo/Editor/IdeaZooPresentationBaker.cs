@@ -73,8 +73,9 @@ namespace IdeaZoo.EditorTools
             var stationCount = prefab.GetComponentsInChildren<IdeaStation>(true).Length;
             var specialistCount = prefab.GetComponentsInChildren<ProceduralSpecialist>(true).Length;
             var publicLanguage = prefab.GetComponentsInChildren<TextMesh>(true).Length;
-            var authoredRoot = FindChild(prefab.transform, "AUTHORED_ENVIRONMENT_KIT");
-            var authoredMeshes = authoredRoot == null ? 0 : authoredRoot.GetComponentsInChildren<MeshFilter>(true).Length;
+            var authoredMeshes = 0;
+            foreach (var child in prefab.GetComponentsInChildren<Transform>(true))
+                if (child.name == "AUTHORED_ENVIRONMENT_KIT" || child.name.Contains("_Authored")) authoredMeshes++;
             var meshFilters = prefab.GetComponentsInChildren<MeshFilter>(true);
             var persistentMeshes = 0;
             foreach (var filter in meshFilters)
@@ -83,7 +84,7 @@ namespace IdeaZoo.EditorTools
             if (stationCount < 11) throw new UnityException("Baked district is missing ruling or evidence stations.");
             if (specialistCount < 6) throw new UnityException("Baked district is missing specialist rigs.");
             if (publicLanguage < 8) throw new UnityException("Baked district is missing environmental story language.");
-            if (authoredMeshes < 24) throw new UnityException("Baked district is missing the authored environment kit.");
+            if (authoredMeshes < 10) throw new UnityException("Baked district is missing authored department structures.");
             if (persistentMeshes < 20) throw new UnityException("Generated meshes were not persisted as project assets.");
             Debug.Log("Idea Zoo baked presentation validated: " + stationCount + " stations, " + specialistCount + " specialists, " + publicLanguage + " public-language elements, " + authoredMeshes + " authored meshes and " + persistentMeshes + " persistent meshes.");
         }

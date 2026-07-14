@@ -194,11 +194,16 @@ namespace IdeaZoo.Story
         public event Action<StoryBeatDefinition> BeatChanged;
         public event Action<CampaignState> StateChanged;
 
-        private readonly CampaignSaveService _save = new CampaignSaveService();
+        private CampaignSaveService _save;
         private IdeaZooGame _game;
         private CaseStage _lastStage;
         private string _lastCompletedRecord = string.Empty;
         private CampaignWorldConsequences _worldConsequences;
+
+        private void Awake()
+        {
+            _save = new CampaignSaveService();
+        }
 
         private IEnumerator Start()
         {

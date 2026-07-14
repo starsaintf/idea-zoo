@@ -1,0 +1,42 @@
+name: Unity production foundation
+
+on:
+  push:
+    branches:
+      - unity-production-v1
+    paths:
+      - "unity/**"
+      - "tests/IdeaZoo.DomainContracts/**"
+      - "scripts/validate_unity_foundation.py"
+      - ".github/workflows/unity-foundation-validation.yml"
+  pull_request:
+    paths:
+      - "unity/**"
+      - "tests/IdeaZoo.DomainContracts/**"
+      - "scripts/validate_unity_foundation.py"
+      - ".github/workflows/unity-foundation-validation.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  domain-contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+      - name: Compile and run engine-independent case contracts
+        run: dotnet run --project tests/IdeaZoo.DomainContracts/IdeaZoo.DomainContracts.csproj --configuration Release
+
+  unity-structure:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate production project structure
+        run: python3 scripts/validate_unity_foundation.py
+      - name: Confirm no failed transport remnants
+        run: |
+          test ! -d .unity-bootstrap
+          ! git ls-files | grep -E '(^|/)chunk-[0-9]+$|bootstrap-unity-source'

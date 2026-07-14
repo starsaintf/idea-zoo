@@ -10,6 +10,7 @@ namespace IdeaZoo.Tests.EditMode
     public sealed class HeroSliceEditorTests
     {
         private const string PrefabPath = "Assets/IdeaZoo/HeroSlice/Prefabs/CinematicHeroSlice.prefab";
+        private const string ManifestPath = "Assets/IdeaZoo/HeroSlice/HERO_SLICE_MANIFEST.json";
 
         [Test]
         public void HeroSliceRuntimeAssembliesImport()
@@ -42,6 +43,11 @@ namespace IdeaZoo.Tests.EditMode
                 Assert.NotNull(scene, "Hero review scene was not baked for " + district + ".");
             }
 
+            var manifest = AssetDatabase.LoadAssetAtPath<TextAsset>(ManifestPath);
+            Assert.NotNull(manifest, "Hero-slice manifest was not baked.");
+            StringAssert.Contains("\"heroCreature\": \"AllCreatureFamilies\"", manifest.text,
+                "Manifest incorrectly narrows the transformation pass to one creature family.");
+
             Assert.IsTrue(EditorApplication.ExecuteMenuItem("Idea Zoo/Hero Slice/Validate Production Pass"));
         }
 
@@ -54,6 +60,31 @@ namespace IdeaZoo.Tests.EditMode
             CollectionAssert.AreEquivalent(
                 new[] { "Unproven", "Observed", "Tested", "Trusted", "Burdened", "Transformed" },
                 names);
+        }
+
+        [Test]
+        public void FinalRulingsKeepDistinctNarrativeMeanings()
+        {
+            var semanticsType = Type.GetType("IdeaZoo.HeroSlice.HeroRulingSemantics, Assembly-CSharp");
+            var rulingType = Type.GetType("IdeaZoo.Core.Ruling, Assembly-CSharp");
+            Assert.NotNull(semanticsType);
+            Assert.NotNull(rulingType);
+
+            var isHopeful = semanticsType.GetMethod("IsHopeful", BindingFlags.Public | BindingFlags.Static);
+            var isBreak = semanticsType.GetMethod("IsBreak", BindingFlags.Public | BindingFlags.Static);
+            var isHibernate = semanticsType.GetMethod("IsHibernate", BindingFlags.Public | BindingFlags.Static);
+            Assert.NotNull(isHopeful);
+            Assert.NotNull(isBreak);
+            Assert.NotNull(isHibernate);
+
+            var build = Enum.Parse(rulingType, "Build");
+            var hibernate = Enum.Parse(rulingType, "Hibernate");
+            var destroy = Enum.Parse(rulingType, "Break");
+            Assert.IsTrue((bool)isHopeful.Invoke(null, new[] { build }));
+            Assert.IsFalse((bool)isBreak.Invoke(null, new[] { hibernate }));
+            Assert.IsTrue((bool)isHibernate.Invoke(null, new[] { hibernate }));
+            Assert.IsTrue((bool)isBreak.Invoke(null, new[] { destroy }));
+            Assert.IsFalse((bool)isHibernate.Invoke(null, new[] { destroy }));
         }
 
         [Test]
@@ -85,6 +116,29 @@ namespace IdeaZoo.Tests.EditMode
             Assert.AreEqual("Transparent", glass.GetTag("RenderType", false), "Glass material is not tagged as transparent.");
             if (glass.HasProperty("_Surface")) Assert.AreEqual(1f, glass.GetFloat("_Surface"), 0.001f);
             if (glass.HasProperty("_ZWrite")) Assert.AreEqual(0f, glass.GetFloat("_ZWrite"), 0.001f);
+        }
+
+        [Test]
+        public void ImportedCreatureEmissionEnablesShaderKeyword()
+        {
+            var utilityType = Type.GetType("IdeaZoo.HeroSlice.HeroSliceUtility, Assembly-CSharp");
+            Assert.NotNull(utilityType);
+            var setEmissionOnly = utilityType.GetMethod("SetEmissionOnly", BindingFlags.Public | BindingFlags.Static);
+            Assert.NotNull(setEmissionOnly);
+
+            var node = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            try
+            {
+                var renderer = node.GetComponent<Renderer>();
+                Assert.NotNull(renderer);
+                setEmissionOnly.Invoke(null, new object[] { renderer, Color.cyan, 1.2f });
+                Assert.IsTrue(renderer.material.IsKeywordEnabled("_EMISSION"),
+                    "Imported creature emission color was set without enabling the shader emission variant.");
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(node);
+            }
         }
     }
 }

@@ -17,7 +17,6 @@ namespace IdeaZoo.HeroSlice
         private CharacterPerformanceRig _keeper;
         private CharacterPerformanceRig _mara;
         private CaseStage _lastStage = (CaseStage)(-1);
-        private int _lastEvidence = -1;
         private float _nextAmbientBeat;
 
         public CharacterPerformanceRig KeeperRig { get { return _keeper; } }
@@ -34,22 +33,11 @@ namespace IdeaZoo.HeroSlice
             if (_game == null || _game.Director == null) return;
             if (_keeper == null || _mara == null) ResolveCast();
             var director = _game.Director;
-            var evidence = director.Profile != null ? director.Profile.Evidence.Count : 0;
 
             if (_lastStage != director.Stage)
             {
                 _lastStage = director.Stage;
                 ApplyStagePerformance(director.Stage);
-            }
-
-            if (_lastEvidence != evidence)
-            {
-                _lastEvidence = evidence;
-                if (evidence > 0)
-                {
-                    if (_keeper != null) _keeper.Perform(CharacterGesture.Inspect, 1.2f);
-                    if (_mara != null) _mara.Perform(CharacterGesture.Explain, 1.2f);
-                }
             }
 
             if (Time.time >= _nextAmbientBeat)
@@ -70,6 +58,20 @@ namespace IdeaZoo.HeroSlice
             {
                 _mara.SetEmotion(CharacterEmotion.Protective);
                 _mara.Perform(CharacterGesture.Explain, 1.4f);
+            }
+        }
+
+        public void SignalBurdened()
+        {
+            if (_keeper != null)
+            {
+                _keeper.SetEmotion(CharacterEmotion.Concerned);
+                _keeper.Perform(CharacterGesture.Inspect, 1.35f);
+            }
+            if (_mara != null)
+            {
+                _mara.SetEmotion(CharacterEmotion.Protective);
+                _mara.Perform(CharacterGesture.Refuse, 1.55f);
             }
         }
 
@@ -424,7 +426,7 @@ namespace IdeaZoo.HeroSlice
                 _lastCreatureStage = _creature.Stage;
                 if (_lastCreatureStage == HeroCreatureStage.Burdened)
                 {
-                    _characters?.SignalTransformation(false);
+                    _characters?.SignalBurdened();
                     QueueShot(PresentationShot.Molt, _game.Creature.transform, 1.25d);
                 }
                 else if (_lastCreatureStage == HeroCreatureStage.Transformed)

@@ -13,7 +13,7 @@ namespace IdeaZoo.HeroSlice
         {
             for (var frame = 0; frame < 600; frame++)
             {
-                var director = FindFirstObjectByType<CinematicHeroSliceDirector>();
+                var director = FindAnyObjectByType<CinematicHeroSliceDirector>();
                 if (director != null && director.Installed && director.WorldPass != null)
                 {
                     if (AutoFrame) director.WorldPass.FrameDistrict(District);

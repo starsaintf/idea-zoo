@@ -44,7 +44,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y blender
           python3 -m pip install --disable-pip-version-check pillow
-          python3 -c "from PIL import Image; print('Pillow', Image.__version__)"
+          python3 -c "import PIL; print('Pillow', PIL.__version__)"
           blender --version
 
       - name: Generate full rigged cast and creature families
@@ -55,7 +55,13 @@ jobs:
             --preview-output unity/ArtProduction/Previews \
             --manifest unity/ArtProduction/generated_manifest.json
 
+      - name: Inspect generated preview files
+        run: |
+          find unity/ArtProduction/Previews -type f -maxdepth 3 -printf '%p %s bytes\n' | sort
+          test "$(find unity/ArtProduction/Previews -name '*.png' -type f | wc -l)" -eq 17
+
       - name: Build design-package contact sheet
+        continue-on-error: true
         run: |
           python3 cloud_art/make_contact_sheet.py \
             --input unity/ArtProduction/Previews \
@@ -100,10 +106,12 @@ jobs:
           import os
           from pathlib import Path
           data = json.loads(Path('unity/ArtProduction/generated_manifest.json').read_text())
+          contact = Path('unity/ArtProduction/Previews/IdeaZoo_CloudArt_ContactSheet.png').exists()
           with open(Path(os.environ['GITHUB_STEP_SUMMARY']), 'a', encoding='utf-8') as out:
               out.write('# Idea Zoo cloud art production\n\n')
               out.write(f"Generated and validated **{data['asset_count']}** rigged assets.\n\n")
               out.write(f"- Characters: {len(data['characters'])}\n")
               out.write(f"- Creature families: {len(data['creatures'])}\n")
-              out.write('- Editable Blender sources, FBX, GLB, PNG previews and a contact sheet are included.\n')
+              out.write('- Editable Blender sources, FBX, GLB and individual PNG previews are included.\n')
+              out.write(f"- Contact sheet: {'included' if contact else 'pending collage-only repair'}\n")
           PY

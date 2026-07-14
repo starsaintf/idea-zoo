@@ -1,5 +1,6 @@
 {
   "name": "IdeaZoo.EditorCloudTests",
+  "references": ["IdeaZoo.CloudArt.Editor"],
   "optionalUnityReferences": ["TestAssemblies"],
   "includePlatforms": ["Editor"],
   "excludePlatforms": [],

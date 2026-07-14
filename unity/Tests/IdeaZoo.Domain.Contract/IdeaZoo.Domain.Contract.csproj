@@ -8,5 +8,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="../../Assets/IdeaZoo/Core/IdeaZooDomain.cs" Link="IdeaZooDomain.cs" />
+    <Compile Include="../../Assets/IdeaZoo/Core/IdeaIntelligenceCore.cs" Link="IdeaIntelligenceCore.cs" />
   </ItemGroup>
 </Project>

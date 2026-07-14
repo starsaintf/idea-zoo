@@ -9,6 +9,7 @@ static class Contract
         TestStrictAnalysis();
         TestCompleteCase();
         TestInvalidTransitions();
+        TestIdeaIntelligence();
 
         if (Failures.Count == 0)
         {
@@ -106,6 +107,54 @@ static class Contract
         director.EnterZoo();
         Expect<InvalidOperationException>(() => director.EnterMolt(), "Molt opened before all habitats completed");
         Expect<ArgumentOutOfRangeException>(() => director.RecordEvidence("desire", 4, "too strong"), "out-of-range evidence strength was accepted");
+    }
+
+    private static void TestIdeaIntelligence()
+    {
+        var profile = IdeaAnalyzer.Analyze(MeetingBridge());
+        profile.RecordId = "contract-intelligence-record";
+        var artifacts = new List<EvidenceArtifact>
+        {
+            new()
+            {
+                ArtifactId = "interview-1",
+                Kind = EvidenceArtifactKind.Interview,
+                Title = "Founder interviews",
+                Summary = "Six exporters described losing detail and trust across languages.",
+                ContentHash = IdeaIntelligenceHash.Sha256("six interviews"),
+                IndependentlyVerified = false,
+                RecordedAtUtc = DateTime.UtcNow
+            },
+            new()
+            {
+                ArtifactId = "commitment-1",
+                Kind = EvidenceArtifactKind.Commitment,
+                Title = "Paid pilot",
+                Summary = "A logistics company signed a paid pilot.",
+                ContentHash = IdeaIntelligenceHash.Sha256("paid pilot"),
+                IndependentlyVerified = true,
+                RecordedAtUtc = DateTime.UtcNow
+            }
+        };
+        var versions = new List<IdeaVersionSnapshot>
+        {
+            new() { VersionId = "v1", Promise = profile.Promise, Audience = profile.Audience, CreatedAtUtc = DateTime.UtcNow },
+            new() { VersionId = "v2", Promise = "Preserve uncertainty while translating meetings.", Audience = "cross-border sales teams", Guardrails = new List<string> { "Visible uncertainty", "Session deletion" }, CreatedAtUtc = DateTime.UtcNow }
+        };
+
+        IIdeaIntelligenceProvider provider = new LocalIdeaIntelligenceProvider();
+        var report = provider.Analyze(profile, artifacts, versions);
+        Check(provider.ProviderName == "Private Local Reasoner", "local intelligence provider identity changed");
+        Check(!string.IsNullOrWhiteSpace(report.PlainThesis), "intelligence report produced no thesis");
+        Check(report.Challenges.Count >= 6, "intelligence report produced too few assumption challenges");
+        Check(report.Stakeholders.Count >= 6, "intelligence report produced too few stakeholder simulations");
+        Check(report.Experiments.Count >= 5, "intelligence report produced too few experiments");
+        Check(report.Evidence.Count == artifacts.Count, "intelligence report did not interpret every artifact");
+        Check(report.Experiments.First().InformationValue >= report.Experiments.Last().InformationValue, "experiments are not ordered by information value");
+        Check(report.Confidence >= 0.18 && report.Confidence <= 0.92, "intelligence confidence escaped its honest bounds");
+        Check(report.Recommendation.Contains("player", StringComparison.OrdinalIgnoreCase), "intelligence layer did not preserve the player's authority");
+        Check(IdeaIntelligenceHash.Sha256("same") == IdeaIntelligenceHash.Sha256("same"), "evidence hashing is unstable");
+        Check(IdeaIntelligenceHash.Sha256("same") != IdeaIntelligenceHash.Sha256("different"), "evidence hashing does not distinguish content");
     }
 
     private static IdeaIntake MeetingBridge()

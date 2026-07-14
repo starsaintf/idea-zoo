@@ -52,4 +52,4 @@ To create reviewable assets inside Unity, use:
 
 CI compiles and executes the engine-independent case contracts and audits the Unity source, presentation modules, mobile safeguards and editor baking workflow without requiring a Unity licence.
 
-A native Unity player has not been built in this environment. A true Unity Editor import, iPhone build, shader validation and physical-device performance pass still require Unity 6000.5.0f1. iOS additionally requires macOS, Xcode, Apple signing and an actual device.
+A native Unity player has not been built in this environment. A true Unity Editor import, package resolution, shader compilation, prefab bake, iPhone build and physical-device performance pass still require Unity 6000.5.0f1. iOS additionally requires macOS, Xcode, Apple signing and an actual device.

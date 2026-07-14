@@ -1,14 +1,14 @@
 {
-  "name": "IdeaZoo.EditorCloudTests",
-  "references": ["IdeaZoo.CloudArt.Editor"],
-  "optionalUnityReferences": ["TestAssemblies"],
+  "name": "IdeaZoo.CloudArt.Editor",
+  "rootNamespace": "IdeaZoo.EditorTools",
+  "references": [],
   "includePlatforms": ["Editor"],
   "excludePlatforms": [],
   "allowUnsafeCode": false,
   "overrideReferences": false,
   "precompiledReferences": [],
-  "autoReferenced": false,
-  "defineConstraints": ["UNITY_INCLUDE_TESTS"],
+  "autoReferenced": true,
+  "defineConstraints": [],
   "versionDefines": [],
   "noEngineReferences": false
 }

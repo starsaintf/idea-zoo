@@ -1,0 +1,33 @@
+asset_group,clip,loop,root_motion,priority,notes
+humanoid,Idle_Neutral,true,false,required,restrained civic breathing
+humanoid,Idle_Curious,true,false,required,head and chest lead toward subject
+humanoid,Idle_Protective,true,false,required,weight between subject and threat
+humanoid,Idle_Concerned,true,false,required,closed shoulders and downward gaze
+humanoid,Idle_Hopeful,true,false,required,open chest without heroic pose
+humanoid,Walk,true,true,required,field-coat locomotion
+humanoid,Turn_Left,false,false,required,short in-place turn
+humanoid,Turn_Right,false,false,required,short in-place turn
+humanoid,Invite,false,false,required,open-hand directional gesture
+humanoid,Explain,false,false,required,measured two-part gesture
+humanoid,Refuse,false,false,required,clear boundary without aggression
+humanoid,Inspect,false,false,required,lens or tool directed at evidence
+humanoid,Celebrate,false,false,required,quiet relief rather than victory pose
+humanoid,Mourn,false,false,required,contained grief
+Mara_Rook,Shield_Specimen,false,false,signature,cape and hatch fork protect subject
+Toma_Reed,Plant_Release_Staff,false,false,signature,marks safe path
+Sefu_Anik,Compare_Vials,false,false,signature,lens and vial comparison
+Elian_Thread,Thread_Molt_Frame,false,false,signature,pulls thread through frame
+Sen_Osei,Separate_Futures,false,false,signature,three frames diverge
+Nara_Voss,Ring_Mercy_Bell,false,false,signature,single deliberate bell action
+creature,Dormant,true,false,required,minimal breathing or pulse
+creature,Curious,true,false,required,head follows Keeper
+creature,Trusting,true,false,required,slower open movement
+creature,Hungry,true,false,required,repeated appetite-oriented movement
+creature,Afraid,true,false,required,withdrawal and compressed form
+creature,Agitated,true,false,required,faster unstable cycle
+creature,Resolute,true,false,required,stable post-ruling posture
+Avian,Glide,true,true,family,wing-driven motion
+BurdenBeast,Trot,true,true,family,load shifts with stride
+Lantern,Hop,true,true,family,core lags behind shell
+Serpentine,Coil,true,true,family,travelling spine wave
+Choir,Orbit,true,false,family,voices converge and separate

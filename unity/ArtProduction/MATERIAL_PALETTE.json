@@ -1,0 +1,15 @@
+{
+  "schema": 1,
+  "name": "Idea Zoo Civic Surrealism",
+  "surfaces": {
+    "paper": {"rgba": [0.76, 0.70, 0.58, 1.0], "meaning": "amendable authority, records, wings, appeals"},
+    "paper_light": {"rgba": [0.88, 0.84, 0.72, 1.0], "meaning": "mercy, clean review space, unmarked possibility"},
+    "brass": {"rgba": [0.58, 0.39, 0.12, 1.0], "metallic": 0.72, "meaning": "commitment, mechanism, maintained tools"},
+    "clay": {"rgba": [0.48, 0.29, 0.20, 1.0], "meaning": "living mass and changeable form"},
+    "glass": {"rgba": [0.18, 0.48, 0.50, 0.46], "meaning": "evidence, reflection, uncertain boundary"},
+    "ink": {"rgba": [0.045, 0.065, 0.075, 1.0], "meaning": "private record, unresolved decision, forecast"},
+    "rust": {"rgba": [0.48, 0.13, 0.10, 1.0], "meaning": "coercion, premature authority, inherited danger"},
+    "moss": {"rgba": [0.20, 0.31, 0.16, 1.0], "meaning": "care, sanctuary, patient usefulness"},
+    "teal": {"rgba": [0.12, 0.84, 0.76, 1.0], "meaning": "resonance, living evidence, observation"}
+  }
+}

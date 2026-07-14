@@ -1,0 +1,24 @@
+{
+  "schema": 1,
+  "characters": [
+    {"id": "Keeper_0", "role": "Keeper narrow frame", "rig": "adult_shared", "modular": ["hair_0_4", "lens_0_2", "skin_0_5", "coat_0_3"]},
+    {"id": "Keeper_1", "role": "Keeper standard frame", "rig": "adult_shared", "modular": ["hair_0_4", "lens_0_2", "skin_0_5", "coat_0_3"]},
+    {"id": "Keeper_2", "role": "Keeper broad frame", "rig": "adult_shared", "modular": ["hair_0_4", "lens_0_2", "skin_0_5", "coat_0_3"]},
+    {"id": "Mara_Rook", "role": "Hatchkeeper", "signature_prop": "Hatch Fork", "rig": "adult_shared"},
+    {"id": "Toma_Reed", "role": "Release Shepherd", "signature_prop": "Release Staff", "rig": "adult_shared"},
+    {"id": "Sefu_Anik", "role": "Appetite Reader", "signature_prop": "Appetite Lens", "rig": "adult_shared"},
+    {"id": "Elian_Thread", "role": "Molt Surgeon", "signature_prop": "Molt Spool", "rig": "adult_shared"},
+    {"id": "Sen_Osei", "role": "Counterfactual Veterinarian", "signature_prop": "Counterfactual Frames", "rig": "adult_shared"},
+    {"id": "Nara_Voss", "role": "Mercy Butcher", "signature_prop": "Mercy Bell", "rig": "adult_shared"},
+    {"id": "Lio_Jury", "role": "Children's Jury", "rig": "child_shared"},
+    {"id": "Amara_Jury", "role": "Children's Jury", "rig": "child_shared"},
+    {"id": "Kweku_Jury", "role": "Children's Jury", "rig": "child_shared"}
+  ],
+  "creature_families": [
+    {"id": "Avian", "motion": "Glide", "supports": ["Fleck", "Hand", "Swarm"]},
+    {"id": "BurdenBeast", "motion": "Trot", "supports": ["Hand", "Teeth", "Burrower"]},
+    {"id": "Lantern", "motion": "Hop", "supports": ["Fleck", "Mirror", "Weather"]},
+    {"id": "Serpentine", "motion": "Coil", "supports": ["Mirror", "Teeth", "Burrower"]},
+    {"id": "Choir", "motion": "Orbit", "supports": ["Swarm", "Weather"]}
+  ]
+}

@@ -50,7 +50,8 @@ namespace IdeaZoo.Runtime
 
         public void Build(Color background, Color knob)
         {
-            _rect = gameObject.AddComponent<RectTransform>();
+            _rect = transform as RectTransform;
+            if (_rect == null) throw new InvalidOperationException("MobileJoystick requires a RectTransform.");
             _rect.sizeDelta = new Vector2(144f, 144f);
             var image = gameObject.AddComponent<Image>();
             image.color = background;

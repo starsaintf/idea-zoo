@@ -34,7 +34,24 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Validate production project structure and source contracts
-        run: python3 scripts/validate_unity_foundation.py
+        shell: bash
+        run: |
+          set +e
+          python3 scripts/validate_unity_foundation.py 2>&1 | tee unity-validation-report.txt
+          status=${PIPESTATUS[0]}
+          {
+            echo '## Unity validation report'
+            echo '```text'
+            cat unity-validation-report.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit "$status"
+      - name: Upload validation report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unity-validation-report
+          path: unity-validation-report.txt
       - name: Confirm failed transport files are gone
         run: |
           test ! -d .unity-bootstrap

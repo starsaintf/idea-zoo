@@ -19,10 +19,7 @@ func _gui_input(event):
 			touch_index = event.index
 			_update_value(event.position)
 		elif not event.pressed and event.index == touch_index:
-			touch_index = -1
-			value = Vector2.ZERO
-			vector_changed.emit(value)
-			queue_redraw()
+			reset_input()
 	elif event is InputEventScreenDrag and event.index == touch_index:
 		_update_value(event.position)
 	elif event is InputEventMouseButton:
@@ -31,10 +28,7 @@ func _gui_input(event):
 				touch_index = -2
 				_update_value(event.position)
 			else:
-				touch_index = -1
-				value = Vector2.ZERO
-				vector_changed.emit(value)
-				queue_redraw()
+				reset_input()
 	elif event is InputEventMouseMotion and touch_index == -2:
 		_update_value(event.position)
 
@@ -49,6 +43,12 @@ func _update_value(position: Vector2):
 	else:
 		var remapped = (magnitude - dead_zone) / (1.0 - dead_zone)
 		value = offset.normalized() * clamp(remapped, 0.0, 1.0)
+	vector_changed.emit(value)
+	queue_redraw()
+
+func reset_input():
+	touch_index = -1
+	value = Vector2.ZERO
 	vector_changed.emit(value)
 	queue_redraw()
 

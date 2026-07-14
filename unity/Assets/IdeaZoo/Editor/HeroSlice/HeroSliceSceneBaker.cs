@@ -104,7 +104,7 @@ namespace IdeaZoo.EditorTools
                 "  \"productionPass\": \"cinematic-hero-slice-v1\",\n" +
                 "  \"districts\": [\"ZooEntrance\", \"LanternFields\", \"SilentStacks\", \"EvidenceForge\"],\n" +
                 "  \"heroCharacters\": [\"Keeper\", \"Mara_Rook\"],\n" +
-                "  \"heroCreature\": \"Lantern\",\n" +
+                "  \"heroCreature\": \"AllCreatureFamilies\",\n" +
                 "  \"creatureStages\": [\"Unproven\", \"Observed\", \"Tested\", \"Trusted\", \"Burdened\", \"Transformed\"],\n" +
                 "  \"mobileTargets\": {\"eco\": 30, \"balanced\": 45, \"quality\": 60}\n" +
                 "}\n";

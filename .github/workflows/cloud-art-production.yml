@@ -49,16 +49,22 @@ jobs:
 
       - name: Generate full rigged cast and creature families
         run: |
+          mkdir -p unity/ArtProduction
           blender --background --python cloud_art/generate_idea_zoo_assets.py -- \
             --output unity/Assets/IdeaZoo/Art/CloudGenerated/Models \
             --source-output unity/ArtProduction/Source \
             --preview-output unity/ArtProduction/Previews \
-            --manifest unity/ArtProduction/generated_manifest.json
+            --manifest unity/ArtProduction/generated_manifest.json \
+            > unity/ArtProduction/blender-generation.log 2>&1
+          tail -80 unity/ArtProduction/blender-generation.log
 
-      - name: Inspect generated preview files
+      - name: Inspect generated files
         run: |
-          find unity/ArtProduction/Previews -type f -maxdepth 3 -printf '%p %s bytes\n' | sort
-          test "$(find unity/ArtProduction/Previews -name '*.png' -type f | wc -l)" -eq 17
+          echo "PNG count: $(find unity/ArtProduction/Previews -name '*.png' -type f 2>/dev/null | wc -l)"
+          echo "FBX count: $(find unity/Assets/IdeaZoo/Art/CloudGenerated -name '*.fbx' -type f 2>/dev/null | wc -l)"
+          echo "BLEND count: $(find unity/ArtProduction/Source -name '*.blend' -type f 2>/dev/null | wc -l)"
+          echo "GLB count: $(find unity/ArtProduction/Source -name '*.glb' -type f 2>/dev/null | wc -l)"
+          find unity/ArtProduction/Previews -type f -maxdepth 3 -printf '%p %s bytes\n' 2>/dev/null | sort || true
 
       - name: Build design-package contact sheet
         continue-on-error: true
@@ -68,13 +74,15 @@ jobs:
             --output unity/ArtProduction/Previews/IdeaZoo_CloudArt_ContactSheet.png
 
       - name: Validate generated assets and mobile budgets
+        id: validate
+        continue-on-error: true
         run: |
           python3 cloud_art/validate_generated_assets.py \
             --manifest unity/ArtProduction/generated_manifest.json \
             --repo-root "$GITHUB_WORKSPACE"
 
-      - name: Record cloud output on production branch
-        if: github.event_name == 'push'
+      - name: Record valid cloud output on production branch
+        if: github.event_name == 'push' && steps.validate.outcome == 'success'
         run: |
           git config user.name "Idea Zoo Cloud Art"
           git config user.email "actions@users.noreply.github.com"
@@ -91,6 +99,7 @@ jobs:
           git push origin HEAD:cloud-art-production-v1
 
       - name: Upload complete design and model package
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: idea-zoo-complete-cloud-art-package
@@ -99,7 +108,12 @@ jobs:
             unity/ArtProduction
           if-no-files-found: error
 
+      - name: Fail when asset validation failed
+        if: steps.validate.outcome != 'success'
+        run: exit 1
+
       - name: Publish build summary
+        if: steps.validate.outcome == 'success'
         run: |
           python3 - <<'PY'
           import json

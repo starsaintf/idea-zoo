@@ -1,0 +1,40 @@
+name: Unity runtime source contract
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "unity/**"
+      - ".github/workflows/unity-runtime-source-contract.yml"
+
+jobs:
+  runtime-regressions:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check reviewed runtime invariants
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          actors = Path('unity/Assets/IdeaZoo/Runtime/IdeaZooActors.cs').read_text()
+          hud = Path('unity/Assets/IdeaZoo/Runtime/IdeaZooHud.cs').read_text()
+          game = Path('unity/Assets/IdeaZoo/Runtime/IdeaZooGame.cs').read_text()
+          domain = Path('unity/Assets/IdeaZoo/Core/IdeaZooDomain.cs').read_text()
+
+          checks = {
+              'joystick reuses RectTransform': '_rect = transform as RectTransform;' in actors,
+              'control lock clears camera touch': '_cameraTouch = int.MinValue;' in actors,
+              'prompt toggles its parent panel': '_promptPanel.SetActive(!string.IsNullOrWhiteSpace(value) && !OverlayOpen);' in hud,
+              'replaced overlays deactivate immediately': 'child.gameObject.SetActive(false);' in hud,
+              'rulings require confirmation': 'ArmOrIssueDecision' in game and '_armedDecisionUntil = Time.unscaledTime + 4f;' in game,
+              'Molt preserves evidence': 'var evidence = EvidenceLevel;' in actors and 'SetStage(evidence,' in actors,
+              'zero evidence does not inflate score': 'if (strength > 0) profile.Metrics.Evidence' in domain,
+              'classification uses token boundaries': 'Regex.Matches' in domain and 'HashSet<string>' in domain,
+              'archive protects corrupt data': 'LastCorruptPath' in Path('unity/Assets/IdeaZoo/Runtime/SpecimenArchive.cs').read_text(),
+          }
+          failed = [name for name, passed in checks.items() if not passed]
+          if failed:
+              raise SystemExit('Runtime source contract failed: ' + ', '.join(failed))
+          print('UNITY_RUNTIME_SOURCE_CONTRACT_PASS')
+          PY

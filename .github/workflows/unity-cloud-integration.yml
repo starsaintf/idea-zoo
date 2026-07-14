@@ -1,5 +1,6 @@
 name: Unity cloud integration
 
+# Credentials configured; push trigger for licensed cloud validation.
 on:
   workflow_dispatch:
   push:

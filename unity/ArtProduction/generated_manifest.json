@@ -1,0 +1,336 @@
+{
+  "schema": 1,
+  "generator": "cloud_art/generate_idea_zoo_assets.py",
+  "art_direction": "civic surrealism",
+  "asset_count": 17,
+  "characters": [
+    {
+      "name": "Keeper_0",
+      "category": "Characters",
+      "fbx": "unity/Assets/IdeaZoo/Art/CloudGenerated/Models/Characters/Keeper_0.fbx",
+      "glb": "unity/ArtProduction/Source/Characters/Keeper_0.glb",
+      "blend": "unity/ArtProduction/Source/Characters/Keeper_0.blend",
+      "preview": "unity/ArtProduction/Previews/Characters/Keeper_0.png",
+      "mesh_objects": 33,
+      "vertices": 1528,
+      "triangles": 2924
+    },
+    {
+      "name": "Keeper_1",
+      "category": "Characters",
+      "fbx": "unity/Assets/IdeaZoo/Art/CloudGenerated/Models/Characters/Keeper_1.fbx",
+      "glb": "unity/ArtProduction/Source/Characters/Keeper_1.glb",
+      "blend": "unity/ArtProduction/Source/Characters/Keeper_1.blend",
+      "preview": "unity/ArtProduction/Previews/Characters/Keeper_1.png",
+      "mesh_objects": 33,
+      "vertices": 1528,
+      "triangles": 2924
+    },
+    {
+      "name": "Keeper_2",
+      "category": "Characters",
+      "fbx": "unity/Assets/IdeaZoo/Art/CloudGenerated/Models/Characters/Keeper_2.fbx",
+      "glb": "unity/ArtProduction/Source/Characters/Keeper_2.glb",
+      "blend": "unity/ArtProduction/Source/Characters/Keeper_2.blend",
+      "preview": "unity/ArtProduction/Previews/Characters/Keeper_2.png",
+      "mesh_objects": 33,
+      "vertices": 1528,
+      "triangles": 2924
+    },
+    {
+      "name": "Mara_Rook",
+      "category": "Characters",
+      "fbx": "unity/Assets/IdeaZoo/Art/CloudGenerated/Models/Characters/Mara_Rook.fbx",
+      "glb": "unity/ArtProduction/Source/Characters/Mara_Rook.glb",
+      "blend": "unity/ArtProduction/Source/Characters/Mara_Rook.blend",
+      "preview": "unity/ArtProduction/Previews/Characters/Mara_Rook.png",
+      "mesh_objects": 24,
+      "vertices": 1154,
+      "triangles": 2212
+    },
+    {
+      "name": "Toma_Reed",
+      "category": "Characters",
+      "fbx": "unity/Assets/IdeaZoo/Art/CloudGenerated/Models/Characters/Toma_Reed.fbx",
+      "glb": "unity/ArtProduction/Source/Characters/Toma_Reed.glb",
+      "blend": "unity/ArtProduction/Source/Characters/Toma_Reed.blend",
+      "preview": "unity/ArtProduction/Previews/Characters/Toma_Reed.png",
+      "mesh_objects": 24,
+      "vertices": 1232,
+      "triangles": 2368
+    },
+    {
+      "name": "Sefu_Anik",
+      "category": "Characters",
+      "fbx": "unity/Assets/IdeaZoo/Art/CloudGenerated/Models/Characters/Sefu_Anik.fbx",
+      "glb": "unity/ArtProduction/Source/Characters/Sefu_Anik.glb",
+      "blend": "unity/ArtProduction/Source/Characters/Sefu_Anik.blend",
+      "preview": "unity/ArtProduction/Previews/Characters/Sefu_Anik.png",
+      "mesh_objects": 26,
+      "vertices": 1438,
+      "triangles": 2772
+    },
+    {
+      "name": "Elian_Thread",
+      "category": "Characters",
+      "fbx": "unity/Assets/IdeaZoo/Art/CloudGenerated/Models/Characters/Elian_Thread.fbx",
+      "glb": "unity/ArtProduction/Source/Characters/Elian_Thread.glb",
+      "blend": "unity/ArtProduction/Source/Characters/Elian_Thread.blend",
+      "preview": "unity/ArtProduction/Previews/Characters/Elian_Thread.png",
+      "mesh_objects": 24,
+      "vertices": 1178,
+      "triangles": 2260
+    },
+    {
+      "name": "Sen_Osei",
+      "category": "Characters",
+      "fbx": "unity/Assets/IdeaZoo/Art/CloudGenerated/Models/Characters/Sen_Osei.fbx",
+      "glb": "unity/ArtProduction/Source/Characters/Sen_Osei.glb",
+      "blend": "unity/ArtProduction/Source/Characters/Sen_Osei.blend",
+      "preview": "unity/ArtProduction/Previews/Characters/Sen_Osei.png",
+      "mesh_objects": 25,
+      "vertices": 1150,
+      "triangles": 2200
+    },
+    {
+      "name": "Nara_Voss",
+      "category": "Characters",
+      "fbx": "unity/Assets/IdeaZoo/Art/CloudGenerated/Models/Characters/Nara_Voss.fbx",
+      "glb": "unity/ArtProduction/Source/Characters/Nara_Voss.glb",
+      "blend": "unity/ArtProduction/Source/Characters/Nara_Voss.blend",
+      "preview": "unity/ArtProduction/Previews/Characters/Nara_Voss.png",
+      "mesh_objects": 24,
+      "vertices": 1178,
+      "triangles": 2260
+    },
+    {
+      "name": "Lio_Jury",
+      "category": "Characters",
+      "fbx": "unity/Assets/IdeaZoo/Art/CloudGenerated/Models/Characters/Lio_Jury.fbx",
+      "glb": "unity/ArtProduction/Source/Characters/Lio_Jury.glb",
+      "blend": "unity/ArtProduction/Source/Characters/Lio_Jury.blend",
+      "preview": "unity/ArtProduction/Previews/Characters/Lio_Jury.png",
+      "mesh_objects": 22,
+      "vertices": 1126,
+      "triangles": 2164
+    },
+    {
+      "name": "Amara_Jury",
+      "category": "Characters",
+      "fbx": "unity/Assets/IdeaZoo/Art/CloudGenerated/Models/Characters/Amara_Jury.fbx",
+      "glb": "unity/ArtProduction/Source/Characters/Amara_Jury.glb",
+      "blend": "unity/ArtProduction/Source/Characters/Amara_Jury.blend",
+      "preview": "unity/ArtProduction/Previews/Characters/Amara_Jury.png",
+      "mesh_objects": 22,
+      "vertices": 1126,
+      "triangles": 2164
+    },
+    {
+      "name": "Kweku_Jury",
+      "category": "Characters",
+      "fbx": "unity/Assets/IdeaZoo/Art/CloudGenerated/Models/Characters/Kweku_Jury.fbx",
+      "glb": "unity/ArtProduction/Source/Characters/Kweku_Jury.glb",
+      "blend": "unity/ArtProduction/Source/Characters/Kweku_Jury.blend",
+      "preview": "unity/ArtProduction/Previews/Characters/Kweku_Jury.png",
+      "mesh_objects": 22,
+      "vertices": 1126,
+      "triangles": 2164
+    }
+  ],
+  "creatures": [
+    {
+      "name": "Avian",
+      "category": "Creatures",
+      "fbx": "unity/Assets/IdeaZoo/Art/CloudGenerated/Models/Creatures/Avian.fbx",
+      "glb": "unity/ArtProduction/Source/Creatures/Avian.glb",
+      "blend": "unity/ArtProduction/Source/Creatures/Avian.blend",
+      "preview": "unity/ArtProduction/Previews/Creatures/Avian.png",
+      "mesh_objects": 11,
+      "vertices": 402,
+      "triangles": 760
+    },
+    {
+      "name": "BurdenBeast",
+      "category": "Creatures",
+      "fbx": "unity/Assets/IdeaZoo/Art/CloudGenerated/Models/Creatures/BurdenBeast.fbx",
+      "glb": "unity/ArtProduction/Source/Creatures/BurdenBeast.glb",
+      "blend": "unity/ArtProduction/Source/Creatures/BurdenBeast.blend",
+      "preview": "unity/ArtProduction/Previews/Creatures/BurdenBeast.png",
+      "mesh_objects": 12,
+      "vertices": 434,
+      "triangles": 820
+    },
+    {
+      "name": "Lantern",
+      "category": "Creatures",
+      "fbx": "unity/Assets/IdeaZoo/Art/CloudGenerated/Models/Creatures/Lantern.fbx",
+      "glb": "unity/ArtProduction/Source/Creatures/Lantern.glb",
+      "blend": "unity/ArtProduction/Source/Creatures/Lantern.blend",
+      "preview": "unity/ArtProduction/Previews/Creatures/Lantern.png",
+      "mesh_objects": 12,
+      "vertices": 642,
+      "triangles": 1236
+    },
+    {
+      "name": "Serpentine",
+      "category": "Creatures",
+      "fbx": "unity/Assets/IdeaZoo/Art/CloudGenerated/Models/Creatures/Serpentine.fbx",
+      "glb": "unity/ArtProduction/Source/Creatures/Serpentine.glb",
+      "blend": "unity/ArtProduction/Source/Creatures/Serpentine.blend",
+      "preview": "unity/ArtProduction/Previews/Creatures/Serpentine.png",
+      "mesh_objects": 12,
+      "vertices": 912,
+      "triangles": 1776
+    },
+    {
+      "name": "Choir",
+      "category": "Creatures",
+      "fbx": "unity/Assets/IdeaZoo/Art/CloudGenerated/Models/Creatures/Choir.fbx",
+      "glb": "unity/ArtProduction/Source/Creatures/Choir.glb",
+      "blend": "unity/ArtProduction/Source/Creatures/Choir.blend",
+      "preview": "unity/ArtProduction/Previews/Creatures/Choir.png",
+      "mesh_objects": 15,
+      "vertices": 918,
+      "triangles": 1776
+    }
+  ],
+  "palette": {
+    "paper": [
+      0.76,
+      0.7,
+      0.58,
+      1.0
+    ],
+    "paper_light": [
+      0.88,
+      0.84,
+      0.72,
+      1.0
+    ],
+    "brass": [
+      0.58,
+      0.39,
+      0.12,
+      1.0
+    ],
+    "clay": [
+      0.48,
+      0.29,
+      0.2,
+      1.0
+    ],
+    "glass": [
+      0.18,
+      0.48,
+      0.5,
+      0.46
+    ],
+    "ink": [
+      0.045,
+      0.065,
+      0.075,
+      1.0
+    ],
+    "rust": [
+      0.48,
+      0.13,
+      0.1,
+      1.0
+    ],
+    "moss": [
+      0.2,
+      0.31,
+      0.16,
+      1.0
+    ],
+    "teal": [
+      0.12,
+      0.84,
+      0.76,
+      1.0
+    ],
+    "burgundy": [
+      0.27,
+      0.09,
+      0.12,
+      1.0
+    ],
+    "violet": [
+      0.18,
+      0.15,
+      0.28,
+      1.0
+    ],
+    "olive": [
+      0.23,
+      0.24,
+      0.16,
+      1.0
+    ],
+    "skin_0": [
+      0.22,
+      0.12,
+      0.08,
+      1.0
+    ],
+    "skin_1": [
+      0.31,
+      0.17,
+      0.11,
+      1.0
+    ],
+    "skin_2": [
+      0.42,
+      0.25,
+      0.17,
+      1.0
+    ],
+    "skin_3": [
+      0.56,
+      0.36,
+      0.25,
+      1.0
+    ],
+    "skin_4": [
+      0.7,
+      0.49,
+      0.34,
+      1.0
+    ],
+    "skin_5": [
+      0.82,
+      0.63,
+      0.47,
+      1.0
+    ]
+  },
+  "required_human_bones": [
+    "Hips",
+    "Spine",
+    "Chest",
+    "Neck",
+    "Head",
+    "LeftShoulder",
+    "LeftUpperArm",
+    "LeftLowerArm",
+    "LeftHand",
+    "RightShoulder",
+    "RightUpperArm",
+    "RightLowerArm",
+    "RightHand",
+    "LeftUpperLeg",
+    "LeftLowerLeg",
+    "LeftFoot",
+    "RightUpperLeg",
+    "RightLowerLeg",
+    "RightFoot"
+  ],
+  "creature_sockets": [
+    "HeadSocket",
+    "AppetiteSocket",
+    "BurdenSocket",
+    "GuardrailRoot",
+    "TailSocket",
+    "EffectRoot"
+  ]
+}

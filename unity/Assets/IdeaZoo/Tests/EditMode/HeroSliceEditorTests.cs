@@ -119,7 +119,7 @@ namespace IdeaZoo.Tests.EditMode
         }
 
         [Test]
-        public void ImportedCreatureEmissionEnablesShaderKeywordWithoutRendererMaterialLeak()
+        public void ImportedCreatureEmissionUsesStableSharedMaterialAndPropertyBlocks()
         {
             var utilityType = Type.GetType("IdeaZoo.HeroSlice.HeroSliceUtility, Assembly-CSharp");
             Assert.NotNull(utilityType);
@@ -131,14 +131,22 @@ namespace IdeaZoo.Tests.EditMode
             {
                 var renderer = node.GetComponent<Renderer>();
                 Assert.NotNull(renderer);
-                var original = renderer.sharedMaterial;
                 setEmissionOnly.Invoke(null, new object[] { renderer, Color.cyan, 1.2f });
-                Assert.NotNull(renderer.sharedMaterial);
-                Assert.AreNotSame(original, renderer.sharedMaterial, "Imported source material was mutated globally.");
-                Assert.IsTrue(renderer.sharedMaterial.IsKeywordEnabled("_EMISSION"),
-                    "Imported creature emission color was set without enabling the shader emission variant.");
-                StringAssert.Contains("_HeroEmission_", renderer.sharedMaterial.name,
-                    "Emission variant was not produced by the explicit cached material path.");
+                var emissionReady = renderer.sharedMaterial;
+                Assert.NotNull(emissionReady);
+                Assert.IsTrue(emissionReady.IsKeywordEnabled("_EMISSION"),
+                    "Imported creature material did not enable the shader emission variant.");
+
+                var firstBlock = new MaterialPropertyBlock();
+                renderer.GetPropertyBlock(firstBlock);
+                Assert.AreEqual(Color.cyan * 1.2f, firstBlock.GetColor("_EmissionColor"));
+
+                setEmissionOnly.Invoke(null, new object[] { renderer, Color.magenta, 0.7f });
+                Assert.AreSame(emissionReady, renderer.sharedMaterial,
+                    "Changing creature state created another derived material instead of reusing the emission-ready material.");
+                var secondBlock = new MaterialPropertyBlock();
+                renderer.GetPropertyBlock(secondBlock);
+                Assert.AreEqual(Color.magenta * 0.7f, secondBlock.GetColor("_EmissionColor"));
             }
             finally
             {

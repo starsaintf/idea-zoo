@@ -1,6 +1,6 @@
 name: Unity cloud integration
 
-# Campaign startup and authored-bake lifecycle fixes applied; licensed validation rerun.
+# Authored environment now boots directly from IdeaZooGame; licensed validation rerun.
 on:
   workflow_dispatch:
   push:

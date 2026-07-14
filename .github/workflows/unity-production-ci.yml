@@ -5,15 +5,13 @@ on:
     branches: [unity-production-v1]
     paths:
       - "unity/**"
-      - "scripts/validate_unity_foundation.py"
-      - "scripts/validate_unity_cloud_environment.py"
+      - "scripts/validate_unity_*.py"
       - ".github/workflows/unity-production-ci.yml"
   pull_request:
     branches: [main]
     paths:
       - "unity/**"
-      - "scripts/validate_unity_foundation.py"
-      - "scripts/validate_unity_cloud_environment.py"
+      - "scripts/validate_unity_*.py"
       - ".github/workflows/unity-production-ci.yml"
   workflow_dispatch:
 
@@ -35,20 +33,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Validate production, cloud and environment contracts
+      - name: Validate all production source passes
         shell: bash
         run: |
           set +e
-          {
-            python3 scripts/validate_unity_foundation.py
-            foundation=$?
-            python3 scripts/validate_unity_cloud_environment.py
-            environment=$?
-            if [ "$foundation" -ne 0 ] || [ "$environment" -ne 0 ]; then
-              exit 1
-            fi
-          } 2>&1 | tee unity-validation-report.txt
-          status=${PIPESTATUS[0]}
+          status=0
+          for validator in scripts/validate_unity_*.py; do
+            echo "==> $validator"
+            python3 "$validator" || status=1
+          done 2>&1 | tee unity-validation-report.txt
+          pipeline=${PIPESTATUS[0]}
+          if [ "$pipeline" -ne 0 ]; then status=1; fi
           {
             echo '## Unity validation report'
             echo '```text'
@@ -70,8 +65,7 @@ jobs:
         run: |
           zip -qr idea-zoo-unity-production-source.zip \
             unity \
-            scripts/validate_unity_foundation.py \
-            scripts/validate_unity_cloud_environment.py \
+            scripts/validate_unity_*.py \
             .github/workflows/unity-production-ci.yml \
             .github/workflows/unity-cloud-integration.yml \
             .github/workflows/unity-license-request.yml

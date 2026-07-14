@@ -39,9 +39,12 @@ required = [
     UNITY / "Assets/IdeaZoo/Presentation/CivicWorldArtPass.cs",
     UNITY / "Assets/IdeaZoo/Presentation/StaffEnsemble.cs",
     UNITY / "Assets/IdeaZoo/Presentation/SpecimenPresentation.cs",
+    UNITY / "Assets/IdeaZoo/Presentation/SpecimenProportionGuard.cs",
     UNITY / "Assets/IdeaZoo/Presentation/PresentationCinematics.cs",
     UNITY / "Assets/IdeaZoo/Presentation/CivicAudio.cs",
     UNITY / "Assets/IdeaZoo/Presentation/GreyboxStaffCleanup.cs",
+    UNITY / "Assets/IdeaZoo/Presentation/MobilePresentationBudget.cs",
+    UNITY / "Assets/IdeaZoo/Editor/IdeaZooPresentationBaker.cs",
     UNITY / "Assets/IdeaZoo/Scenes/WhisperGate.unity",
     UNITY / "Assets/IdeaZoo/Scenes/WhisperGate.unity.meta",
 ]
@@ -159,10 +162,15 @@ for tool in ["HatchFork", "ReleaseStaff", "AppetiteLens", "MoltSpool", "Counterf
 specimen = text(UNITY / "Assets/IdeaZoo/Presentation/SpecimenPresentation.cs")
 for idea_class in ["Fleck", "Hand", "Mirror", "Teeth", "Swarm", "Weather", "Burrower"]:
     check(f"IdeaClass.{idea_class}" in specimen, f"authored specimen silhouette is missing {idea_class}")
-for appetite in ["Attention", "Data", "Money", "Trust", "Obedience", "Labour", "Care", "Time"]:
+for appetite in ["Attention", "Data", "Money", "Trust", "Obedience", "Labour", "Care"]:
     check(f"Appetite.{appetite}" in specimen, f"specimen appetite marking is missing {appetite}")
+check("ClockSpine_" in specimen, "specimen appetite marking is missing Time")
 check("Authored_Hidden_Burden" in specimen, "hidden burden presentation is missing")
 check("Guardrail_Rings" in specimen, "Molt guardrail presentation is missing")
+
+proportions = text(UNITY / "Assets/IdeaZoo/Presentation/SpecimenProportionGuard.cs")
+check("TaskPlate_" in proportions and "DataPrism_" in proportions, "authored creature proportions are not protected")
+check("DefaultExecutionOrder(1100)" in proportions, "specimen proportion correction may run before evidence scaling")
 
 cinematics = text(UNITY / "Assets/IdeaZoo/Presentation/PresentationCinematics.cs")
 check("PlayableDirector" in cinematics and "PlayableAsset" in cinematics, "story sequences do not use Unity Playables")
@@ -177,6 +185,15 @@ check("Hatch_Cue" in sound and "Ruling_Cue" in sound, "story audio cues are inco
 
 cleanup = text(UNITY / "Assets/IdeaZoo/Presentation/GreyboxStaffCleanup.cs")
 check("STAFF_AND_AMBIENT_LIFE" in cleanup, "prototype staff replacement is missing")
+
+budget = text(UNITY / "Assets/IdeaZoo/Presentation/MobilePresentationBudget.cs")
+check("ScalableBufferManager.ResizeBuffers" in budget, "adaptive mobile resolution is missing")
+check("shadowDistance" in budget and "lodBias" in budget, "mobile presentation tiers are incomplete")
+check("CullByDistance" in budget, "decorative detail culling is missing")
+
+baker = text(UNITY / "Assets/IdeaZoo/Editor/IdeaZooPresentationBaker.cs")
+check("Bake District Prefab" in baker and "Bake Review Scene" in baker, "presentation baking workflow is incomplete")
+check("Validate Baked Assets" in baker, "baked presentation validation command is missing")
 
 bootstrap_files = list(ROOT.glob(".unity-bootstrap/**/*"))
 check(not bootstrap_files, "temporary Unity transport files remain in the repository")

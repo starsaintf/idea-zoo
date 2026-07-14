@@ -119,7 +119,7 @@ namespace IdeaZoo.Tests.EditMode
         }
 
         [Test]
-        public void ImportedCreatureEmissionEnablesShaderKeyword()
+        public void ImportedCreatureEmissionEnablesShaderKeywordWithoutRendererMaterialLeak()
         {
             var utilityType = Type.GetType("IdeaZoo.HeroSlice.HeroSliceUtility, Assembly-CSharp");
             Assert.NotNull(utilityType);
@@ -131,9 +131,14 @@ namespace IdeaZoo.Tests.EditMode
             {
                 var renderer = node.GetComponent<Renderer>();
                 Assert.NotNull(renderer);
+                var original = renderer.sharedMaterial;
                 setEmissionOnly.Invoke(null, new object[] { renderer, Color.cyan, 1.2f });
-                Assert.IsTrue(renderer.material.IsKeywordEnabled("_EMISSION"),
+                Assert.NotNull(renderer.sharedMaterial);
+                Assert.AreNotSame(original, renderer.sharedMaterial, "Imported source material was mutated globally.");
+                Assert.IsTrue(renderer.sharedMaterial.IsKeywordEnabled("_EMISSION"),
                     "Imported creature emission color was set without enabling the shader emission variant.");
+                StringAssert.Contains("_HeroEmission_", renderer.sharedMaterial.name,
+                    "Emission variant was not produced by the explicit cached material path.");
             }
             finally
             {

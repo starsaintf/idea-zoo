@@ -161,11 +161,13 @@ namespace IdeaZoo.HeroSlice
             if (Materials.TryGetValue(cacheKey, out material) && material != null) return material;
 
             var shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
+            if (shader == null) throw new InvalidOperationException("Idea Zoo could not locate a supported lit shader.");
             material = new Material(shader) { name = "IZ_Hero_Surface_" + cacheKey };
             if (material.HasProperty("_BaseColor")) material.SetColor("_BaseColor", color);
             if (material.HasProperty("_Color")) material.SetColor("_Color", color);
             if (material.HasProperty("_Metallic")) material.SetFloat("_Metallic", metallic);
             if (material.HasProperty("_Smoothness")) material.SetFloat("_Smoothness", smoothness);
+            ConfigureSurface(material, color.a < 0.99f);
             Materials[cacheKey] = material;
             return material;
         }
@@ -174,14 +176,47 @@ namespace IdeaZoo.HeroSlice
         {
             if (renderer == null) return;
             var material = renderer.material;
-            var value = color * Mathf.Max(0f, intensity);
-            if (material.HasProperty("_EmissionColor"))
-            {
-                material.EnableKeyword("_EMISSION");
-                material.SetColor("_EmissionColor", value);
-            }
+            SetMaterialEmission(material, color, intensity);
             if (material.HasProperty("_BaseColor")) material.SetColor("_BaseColor", Color.Lerp(color * 0.22f, color, 0.45f));
             if (material.HasProperty("_Color")) material.SetColor("_Color", Color.Lerp(color * 0.22f, color, 0.45f));
+        }
+
+        public static void SetEmissionOnly(Renderer renderer, Color color, float intensity)
+        {
+            if (renderer == null) return;
+            SetMaterialEmission(renderer.material, color, intensity);
+        }
+
+        private static void SetMaterialEmission(Material material, Color color, float intensity)
+        {
+            if (material == null || !material.HasProperty("_EmissionColor")) return;
+            material.EnableKeyword("_EMISSION");
+            material.SetColor("_EmissionColor", color * Mathf.Max(0f, intensity));
+        }
+
+        private static void ConfigureSurface(Material material, bool transparent)
+        {
+            if (material == null) return;
+            if (transparent)
+            {
+                if (material.HasProperty("_Surface")) material.SetFloat("_Surface", 1f);
+                if (material.HasProperty("_Blend")) material.SetFloat("_Blend", 0f);
+                if (material.HasProperty("_ZWrite")) material.SetFloat("_ZWrite", 0f);
+                if (material.HasProperty("_SrcBlend")) material.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha);
+                if (material.HasProperty("_DstBlend")) material.SetFloat("_DstBlend", (float)BlendMode.OneMinusSrcAlpha);
+                material.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+                material.DisableKeyword("_ALPHATEST_ON");
+                material.SetOverrideTag("RenderType", "Transparent");
+                material.renderQueue = (int)RenderQueue.Transparent;
+            }
+            else
+            {
+                if (material.HasProperty("_Surface")) material.SetFloat("_Surface", 0f);
+                if (material.HasProperty("_ZWrite")) material.SetFloat("_ZWrite", 1f);
+                material.DisableKeyword("_SURFACE_TYPE_TRANSPARENT");
+                material.SetOverrideTag("RenderType", "Opaque");
+                material.renderQueue = (int)RenderQueue.Geometry;
+            }
         }
 
         public static TextMesh Label(Transform parent, string name, string text, Vector3 localPosition, int fontSize, Color color, float characterSize = 0.08f)

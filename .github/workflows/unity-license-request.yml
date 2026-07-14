@@ -6,6 +6,10 @@ on:
     branches: [unity-production-v1]
     paths:
       - ".github/workflows/unity-license-request.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - ".github/workflows/unity-license-request.yml"
 
 permissions:
   contents: read

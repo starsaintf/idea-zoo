@@ -75,17 +75,20 @@ namespace IdeaZoo.HeroSlice
             }
         }
 
-        public void SignalTransformation(bool hopeful)
+        public void SignalTransformation(Ruling? ruling)
         {
+            var hopeful = HeroRulingSemantics.IsHopeful(ruling);
+            var hibernate = HeroRulingSemantics.IsHibernate(ruling);
+
             if (_keeper != null)
             {
-                _keeper.SetEmotion(hopeful ? CharacterEmotion.Hopeful : CharacterEmotion.Grieving);
-                _keeper.Perform(hopeful ? CharacterGesture.Celebrate : CharacterGesture.Mourn, 1.8f);
+                _keeper.SetEmotion(hopeful ? CharacterEmotion.Hopeful : hibernate ? CharacterEmotion.Concerned : CharacterEmotion.Grieving);
+                _keeper.Perform(hopeful ? CharacterGesture.Celebrate : hibernate ? CharacterGesture.Inspect : CharacterGesture.Mourn, 1.8f);
             }
             if (_mara != null)
             {
-                _mara.SetEmotion(hopeful ? CharacterEmotion.Hopeful : CharacterEmotion.Concerned);
-                _mara.Perform(hopeful ? CharacterGesture.Invite : CharacterGesture.Refuse, 1.8f);
+                _mara.SetEmotion(hopeful ? CharacterEmotion.Hopeful : hibernate ? CharacterEmotion.Protective : CharacterEmotion.Concerned);
+                _mara.Perform(hopeful ? CharacterGesture.Invite : hibernate ? CharacterGesture.Explain : CharacterGesture.Refuse, 1.8f);
             }
         }
 
@@ -107,13 +110,15 @@ namespace IdeaZoo.HeroSlice
                 ? _game.Director.Profile.FinalRuling
                 : null;
             var hopeful = HeroRulingSemantics.IsHopeful(ruling);
+            var hibernate = HeroRulingSemantics.IsHibernate(ruling);
 
             if (_keeper != null)
             {
                 var emotion = CharacterEmotion.Curious;
                 if (stage == CaseStage.Molt) emotion = CharacterEmotion.Concerned;
                 if (stage == CaseStage.Decision) emotion = CharacterEmotion.Defiant;
-                if (stage == CaseStage.Complete) emotion = hopeful ? CharacterEmotion.Hopeful : CharacterEmotion.Grieving;
+                if (stage == CaseStage.Complete)
+                    emotion = hopeful ? CharacterEmotion.Hopeful : hibernate ? CharacterEmotion.Concerned : CharacterEmotion.Grieving;
                 _keeper.SetEmotion(emotion);
             }
 
@@ -121,7 +126,8 @@ namespace IdeaZoo.HeroSlice
             {
                 var emotion = CharacterEmotion.Protective;
                 if (stage == CaseStage.Decision) emotion = CharacterEmotion.Concerned;
-                if (stage == CaseStage.Complete) emotion = hopeful ? CharacterEmotion.Hopeful : CharacterEmotion.Concerned;
+                if (stage == CaseStage.Complete)
+                    emotion = hopeful ? CharacterEmotion.Hopeful : hibernate ? CharacterEmotion.Protective : CharacterEmotion.Concerned;
                 _mara.SetEmotion(emotion);
             }
         }
@@ -315,15 +321,8 @@ namespace IdeaZoo.HeroSlice
             }
 
             if (_visual != null)
-            {
                 foreach (var renderer in _visual.GetComponentsInChildren<Renderer>(true))
-                {
-                    var block = new MaterialPropertyBlock();
-                    renderer.GetPropertyBlock(block);
-                    block.SetColor("_EmissionColor", color * (0.28f + evidence * 0.72f));
-                    renderer.SetPropertyBlock(block);
-                }
-            }
+                    HeroSliceUtility.SetEmissionOnly(renderer, color, 0.28f + evidence * 0.72f);
 
             _stageScale = StageScale(stage, safety, ruling);
             if (_visual != null) _visual.localScale = _visualBaseScale * _stageScale;
@@ -379,6 +378,10 @@ namespace IdeaZoo.HeroSlice
         private CaseStage _lastStage = (CaseStage)(-1);
         private HeroCreatureStage _lastCreatureStage = (HeroCreatureStage)(-1);
         private float _nextAllowedShot;
+        private PresentationShot? _pendingUniqueShot;
+        private Transform _pendingUniqueTarget;
+        private double _pendingUniqueDuration;
+        private float _pendingUniqueEarliest;
 
         public void Bind(
             IdeaZooGame game,
@@ -400,6 +403,7 @@ namespace IdeaZoo.HeroSlice
             if (_camera == null) _camera = FindAnyObjectByType<PresentationCameraRig>();
             if (!_standardPresentationOwnsCaseShots)
                 _standardPresentationOwnsCaseShots = FindAnyObjectByType<IdeaZooPresentationDirector>() != null;
+            TryPlayPendingUniqueShot();
 
             var director = _game.Director;
             var profile = director.Profile;
@@ -427,12 +431,14 @@ namespace IdeaZoo.HeroSlice
                 if (_lastCreatureStage == HeroCreatureStage.Burdened)
                 {
                     _characters?.SignalBurdened();
-                    QueueShot(PresentationShot.Molt, _game.Creature.transform, 1.25d);
+                    if (_standardPresentationOwnsCaseShots)
+                        ScheduleUniqueShot(PresentationShot.Molt, _game.Creature.transform, 1.25d, 0.85f);
+                    else
+                        QueueShot(PresentationShot.Molt, _game.Creature.transform, 1.25d);
                 }
                 else if (_lastCreatureStage == HeroCreatureStage.Transformed)
                 {
-                    var hopeful = profile != null && HeroRulingSemantics.IsHopeful(profile.FinalRuling);
-                    _characters?.SignalTransformation(hopeful);
+                    _characters?.SignalTransformation(profile != null ? profile.FinalRuling : null);
                     if (!_standardPresentationOwnsCaseShots)
                         QueueShot(PresentationShot.Ruling, _game.Creature.transform, 1.8d);
                 }
@@ -457,6 +463,27 @@ namespace IdeaZoo.HeroSlice
                     QueueShot(PresentationShot.Ruling, _game.Creature.transform, 1.8d);
                 }
             }
+        }
+
+        private void ScheduleUniqueShot(PresentationShot shot, Transform target, double duration, float delay)
+        {
+            if (target == null) return;
+            _pendingUniqueShot = shot;
+            _pendingUniqueTarget = target;
+            _pendingUniqueDuration = duration;
+            _pendingUniqueEarliest = Time.unscaledTime + Mathf.Max(0f, delay);
+        }
+
+        private void TryPlayPendingUniqueShot()
+        {
+            if (!_pendingUniqueShot.HasValue || _camera == null || _camera.ShotActive || Time.unscaledTime < _pendingUniqueEarliest) return;
+            var shot = _pendingUniqueShot.Value;
+            var target = _pendingUniqueTarget;
+            var duration = _pendingUniqueDuration;
+            _pendingUniqueShot = null;
+            _pendingUniqueTarget = null;
+            _pendingUniqueDuration = 0d;
+            QueueShot(shot, target, duration);
         }
 
         private void QueueShot(PresentationShot shot, Transform target, double duration)

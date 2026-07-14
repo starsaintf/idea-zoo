@@ -70,6 +70,22 @@ namespace IdeaZoo.Tests.EditMode
             Assert.NotNull(first);
             Assert.AreSame(first, second, "Equal surface properties must resolve to one shared material instance.");
         }
+
+        [Test]
+        public void TransparentHeroSurfacesUseTransparentRendering()
+        {
+            var utilityType = Type.GetType("IdeaZoo.HeroSlice.HeroSliceUtility, Assembly-CSharp");
+            Assert.NotNull(utilityType, "HeroSliceUtility type was not imported.");
+            var materialFor = utilityType.GetMethod("MaterialFor", BindingFlags.Public | BindingFlags.Static);
+            Assert.NotNull(materialFor, "Hero material cache entry point is missing.");
+
+            var glass = materialFor.Invoke(null, new object[] { new Color(0.10f, 0.42f, 0.62f, 0.35f), 0.05f, 0.92f }) as Material;
+            Assert.NotNull(glass);
+            Assert.GreaterOrEqual(glass.renderQueue, 3000, "Glass material remained in the opaque render queue.");
+            Assert.AreEqual("Transparent", glass.GetTag("RenderType", false), "Glass material is not tagged as transparent.");
+            if (glass.HasProperty("_Surface")) Assert.AreEqual(1f, glass.GetFloat("_Surface"), 0.001f);
+            if (glass.HasProperty("_ZWrite")) Assert.AreEqual(0f, glass.GetFloat("_ZWrite"), 0.001f);
+        }
     }
 }
 #endif

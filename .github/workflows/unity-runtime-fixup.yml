@@ -1,0 +1,49 @@
+name: Unity runtime UI fixup
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "unity/**"
+      - ".github/workflows/unity-runtime-fixup.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    if: ${{ github.actor != 'github-actions[bot]' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: unity-production-v1
+      - name: Repair prompt visibility and overlay replacement
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('unity/Assets/IdeaZoo/Runtime/IdeaZooHud.cs')
+          source = path.read_text()
+          replacements = [
+              ('private Text _prompt;\n', 'private Text _prompt;\n        private GameObject _promptPanel;\n'),
+              ('var promptPanel = Panel("Prompt", _safeRoot.transform, new Color(0.02f, 0.05f, 0.06f, 0.90f), Brass);', '_promptPanel = Panel("Prompt", _safeRoot.transform, new Color(0.02f, 0.05f, 0.06f, 0.90f), Brass);'),
+              ('var promptRect = promptPanel.GetComponent<RectTransform>();', 'var promptRect = _promptPanel.GetComponent<RectTransform>();'),
+              ('_prompt = Label("PromptText", promptPanel.transform, string.Empty, 15, Paper, TextAnchor.MiddleCenter);', '_prompt = Label("PromptText", _promptPanel.transform, string.Empty, 15, Paper, TextAnchor.MiddleCenter);'),
+              ('promptPanel.SetActive(false);', '_promptPanel.SetActive(false);'),
+              ('_prompt.gameObject.SetActive(!string.IsNullOrWhiteSpace(value) && !OverlayOpen);', '_promptPanel.SetActive(!string.IsNullOrWhiteSpace(value) && !OverlayOpen);'),
+              ('foreach (Transform child in _overlayContent) Destroy(child.gameObject);', 'foreach (Transform child in _overlayContent)\n            {\n                child.gameObject.SetActive(false);\n                Destroy(child.gameObject);\n            }')
+          ]
+          for old, new in replacements:
+              if old not in source:
+                  raise SystemExit('Expected source fragment missing: ' + old)
+              source = source.replace(old, new, 1)
+          path.write_text(source)
+          PY
+          rm .github/workflows/unity-runtime-fixup.yml
+      - name: Commit reviewed UI repairs
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Fix Unity prompt and overlay lifecycle"
+          git push origin unity-production-v1

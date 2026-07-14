@@ -54,6 +54,8 @@ checks = {
     "imported creature emission is enabled without implicit leaks": "SetEmissionOnly" in texts[core.name]
         and "EmissionMaterialFor" in texts[core.name]
         and "renderer.material" not in texts[core.name]
+        and "GetEntityId()" in texts[core.name]
+        and "GetInstanceID()" not in texts[core.name]
         and "HeroSliceUtility.SetEmissionOnly(renderer" in texts[performance.name]
         and "ImportedCreatureEmissionEnablesShaderKeywordWithoutRendererMaterialLeak" in texts[edit_tests.name],
     "manifest covers all creature families": "AllCreatureFamilies" in texts[editor.name]

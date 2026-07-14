@@ -11,9 +11,9 @@
       "glb": "unity/ArtProduction/Source/Characters/Keeper_0.glb",
       "blend": "unity/ArtProduction/Source/Characters/Keeper_0.blend",
       "preview": "unity/ArtProduction/Previews/Characters/Keeper_0.png",
-      "mesh_objects": 33,
-      "vertices": 1528,
-      "triangles": 2924
+      "mesh_objects": 48,
+      "vertices": 2056,
+      "triangles": 3920
     },
     {
       "name": "Keeper_1",
@@ -22,9 +22,9 @@
       "glb": "unity/ArtProduction/Source/Characters/Keeper_1.glb",
       "blend": "unity/ArtProduction/Source/Characters/Keeper_1.blend",
       "preview": "unity/ArtProduction/Previews/Characters/Keeper_1.png",
-      "mesh_objects": 33,
-      "vertices": 1528,
-      "triangles": 2924
+      "mesh_objects": 48,
+      "vertices": 2056,
+      "triangles": 3920
     },
     {
       "name": "Keeper_2",
@@ -33,9 +33,9 @@
       "glb": "unity/ArtProduction/Source/Characters/Keeper_2.glb",
       "blend": "unity/ArtProduction/Source/Characters/Keeper_2.blend",
       "preview": "unity/ArtProduction/Previews/Characters/Keeper_2.png",
-      "mesh_objects": 33,
-      "vertices": 1528,
-      "triangles": 2924
+      "mesh_objects": 48,
+      "vertices": 2056,
+      "triangles": 3920
     },
     {
       "name": "Mara_Rook",
@@ -44,9 +44,9 @@
       "glb": "unity/ArtProduction/Source/Characters/Mara_Rook.glb",
       "blend": "unity/ArtProduction/Source/Characters/Mara_Rook.blend",
       "preview": "unity/ArtProduction/Previews/Characters/Mara_Rook.png",
-      "mesh_objects": 24,
-      "vertices": 1154,
-      "triangles": 2212
+      "mesh_objects": 41,
+      "vertices": 1714,
+      "triangles": 3264
     },
     {
       "name": "Toma_Reed",
@@ -55,9 +55,9 @@
       "glb": "unity/ArtProduction/Source/Characters/Toma_Reed.glb",
       "blend": "unity/ArtProduction/Source/Characters/Toma_Reed.blend",
       "preview": "unity/ArtProduction/Previews/Characters/Toma_Reed.png",
-      "mesh_objects": 24,
-      "vertices": 1232,
-      "triangles": 2368
+      "mesh_objects": 39,
+      "vertices": 1760,
+      "triangles": 3364
     },
     {
       "name": "Sefu_Anik",
@@ -66,9 +66,9 @@
       "glb": "unity/ArtProduction/Source/Characters/Sefu_Anik.glb",
       "blend": "unity/ArtProduction/Source/Characters/Sefu_Anik.blend",
       "preview": "unity/ArtProduction/Previews/Characters/Sefu_Anik.png",
-      "mesh_objects": 26,
-      "vertices": 1438,
-      "triangles": 2772
+      "mesh_objects": 42,
+      "vertices": 2052,
+      "triangles": 3936
     },
     {
       "name": "Elian_Thread",
@@ -77,9 +77,9 @@
       "glb": "unity/ArtProduction/Source/Characters/Elian_Thread.glb",
       "blend": "unity/ArtProduction/Source/Characters/Elian_Thread.blend",
       "preview": "unity/ArtProduction/Previews/Characters/Elian_Thread.png",
-      "mesh_objects": 24,
-      "vertices": 1178,
-      "triangles": 2260
+      "mesh_objects": 40,
+      "vertices": 1722,
+      "triangles": 3284
     },
     {
       "name": "Sen_Osei",
@@ -88,9 +88,9 @@
       "glb": "unity/ArtProduction/Source/Characters/Sen_Osei.glb",
       "blend": "unity/ArtProduction/Source/Characters/Sen_Osei.blend",
       "preview": "unity/ArtProduction/Previews/Characters/Sen_Osei.png",
-      "mesh_objects": 25,
-      "vertices": 1150,
-      "triangles": 2200
+      "mesh_objects": 40,
+      "vertices": 1678,
+      "triangles": 3196
     },
     {
       "name": "Nara_Voss",
@@ -99,9 +99,9 @@
       "glb": "unity/ArtProduction/Source/Characters/Nara_Voss.glb",
       "blend": "unity/ArtProduction/Source/Characters/Nara_Voss.blend",
       "preview": "unity/ArtProduction/Previews/Characters/Nara_Voss.png",
-      "mesh_objects": 24,
-      "vertices": 1178,
-      "triangles": 2260
+      "mesh_objects": 39,
+      "vertices": 1706,
+      "triangles": 3256
     },
     {
       "name": "Lio_Jury",
@@ -110,9 +110,9 @@
       "glb": "unity/ArtProduction/Source/Characters/Lio_Jury.glb",
       "blend": "unity/ArtProduction/Source/Characters/Lio_Jury.blend",
       "preview": "unity/ArtProduction/Previews/Characters/Lio_Jury.png",
-      "mesh_objects": 22,
-      "vertices": 1126,
-      "triangles": 2164
+      "mesh_objects": 38,
+      "vertices": 1670,
+      "triangles": 3188
     },
     {
       "name": "Amara_Jury",
@@ -121,9 +121,9 @@
       "glb": "unity/ArtProduction/Source/Characters/Amara_Jury.glb",
       "blend": "unity/ArtProduction/Source/Characters/Amara_Jury.blend",
       "preview": "unity/ArtProduction/Previews/Characters/Amara_Jury.png",
-      "mesh_objects": 22,
-      "vertices": 1126,
-      "triangles": 2164
+      "mesh_objects": 38,
+      "vertices": 1670,
+      "triangles": 3188
     },
     {
       "name": "Kweku_Jury",
@@ -132,9 +132,9 @@
       "glb": "unity/ArtProduction/Source/Characters/Kweku_Jury.glb",
       "blend": "unity/ArtProduction/Source/Characters/Kweku_Jury.blend",
       "preview": "unity/ArtProduction/Previews/Characters/Kweku_Jury.png",
-      "mesh_objects": 22,
-      "vertices": 1126,
-      "triangles": 2164
+      "mesh_objects": 38,
+      "vertices": 1670,
+      "triangles": 3188
     }
   ],
   "creatures": [
@@ -145,9 +145,9 @@
       "glb": "unity/ArtProduction/Source/Creatures/Avian.glb",
       "blend": "unity/ArtProduction/Source/Creatures/Avian.blend",
       "preview": "unity/ArtProduction/Previews/Creatures/Avian.png",
-      "mesh_objects": 11,
-      "vertices": 402,
-      "triangles": 760
+      "mesh_objects": 12,
+      "vertices": 422,
+      "triangles": 796
     },
     {
       "name": "BurdenBeast",
@@ -156,9 +156,9 @@
       "glb": "unity/ArtProduction/Source/Creatures/BurdenBeast.glb",
       "blend": "unity/ArtProduction/Source/Creatures/BurdenBeast.blend",
       "preview": "unity/ArtProduction/Previews/Creatures/BurdenBeast.png",
-      "mesh_objects": 12,
-      "vertices": 434,
-      "triangles": 820
+      "mesh_objects": 15,
+      "vertices": 458,
+      "triangles": 856
     },
     {
       "name": "Lantern",
@@ -167,9 +167,9 @@
       "glb": "unity/ArtProduction/Source/Creatures/Lantern.glb",
       "blend": "unity/ArtProduction/Source/Creatures/Lantern.blend",
       "preview": "unity/ArtProduction/Previews/Creatures/Lantern.png",
-      "mesh_objects": 12,
-      "vertices": 642,
-      "triangles": 1236
+      "mesh_objects": 15,
+      "vertices": 694,
+      "triangles": 1328
     },
     {
       "name": "Serpentine",
@@ -178,9 +178,9 @@
       "glb": "unity/ArtProduction/Source/Creatures/Serpentine.glb",
       "blend": "unity/ArtProduction/Source/Creatures/Serpentine.blend",
       "preview": "unity/ArtProduction/Previews/Creatures/Serpentine.png",
-      "mesh_objects": 12,
-      "vertices": 912,
-      "triangles": 1776
+      "mesh_objects": 16,
+      "vertices": 944,
+      "triangles": 1824
     },
     {
       "name": "Choir",
@@ -189,9 +189,9 @@
       "glb": "unity/ArtProduction/Source/Creatures/Choir.glb",
       "blend": "unity/ArtProduction/Source/Creatures/Choir.blend",
       "preview": "unity/ArtProduction/Previews/Creatures/Choir.png",
-      "mesh_objects": 15,
-      "vertices": 918,
-      "triangles": 1776
+      "mesh_objects": 16,
+      "vertices": 966,
+      "triangles": 1868
     }
   ],
   "palette": {

@@ -5,16 +5,23 @@ ROOT = Path(__file__).resolve().parents[1]
 core = ROOT / "unity/Assets/IdeaZoo/HeroSlice/HeroSliceCore.cs"
 world = ROOT / "unity/Assets/IdeaZoo/HeroSlice/HeroWorldProduction.cs"
 performance = ROOT / "unity/Assets/IdeaZoo/HeroSlice/HeroPerformanceAndTransformation.cs"
+prefab_anchor = ROOT / "unity/Assets/IdeaZoo/HeroSlice/CinematicHeroSlicePrefabAnchor.cs"
+review_anchor = ROOT / "unity/Assets/IdeaZoo/HeroSlice/HeroSliceReviewSceneAnchor.cs"
 editor = ROOT / "unity/Assets/IdeaZoo/Editor/HeroSlice/HeroSliceSceneBaker.cs"
-tests = ROOT / "unity/Assets/IdeaZoo/Tests/EditMode/HeroSliceEditorTests.cs"
+edit_tests = ROOT / "unity/Assets/IdeaZoo/Tests/EditMode/HeroSliceEditorTests.cs"
+play_tests = ROOT / "unity/Assets/IdeaZoo/Tests/PlayMode/IdeaZooCloudPlayModeTests.cs"
 doc = ROOT / "unity/HERO_SLICE_PRODUCTION.md"
 
-required_files = [core, world, performance, editor, tests, doc]
+required_files = [
+    core, world, performance, prefab_anchor, review_anchor,
+    editor, edit_tests, play_tests, doc,
+]
 missing = [str(path.relative_to(ROOT)) for path in required_files if not path.exists()]
 if missing:
     raise SystemExit("Missing hero-slice files: " + ", ".join(missing))
 
 texts = {path.name: path.read_text(encoding="utf-8") for path in required_files}
+hero_runtime = "\n".join(texts[path.name] for path in (core, world, performance, prefab_anchor, review_anchor))
 
 checks = {
     "runtime auto installer": "RuntimeInitializeOnLoadMethod" in texts[core.name],
@@ -28,18 +35,33 @@ checks = {
         "Unproven", "Observed", "Tested", "Trusted", "Burdened", "Transformed"
     )),
     "story state drives creature art": "Evaluate(IdeaProfile profile, CaseStage caseStage)" in texts[performance.name],
-    "cinematic character beats": "CharacterGesture" in texts[performance.name] and "PresentationCameraRig" in texts[performance.name],
-    "mobile adaptive budget": "HeroMobileBudgetMonitor" in texts[performance.name] and "AdaptiveQuality" in texts[performance.name],
+    "outcome-sensitive final art": all(token in texts[performance.name] for token in (
+        "IsHopeful", "IsBreak", "IsHibernate"
+    )),
+    "cinematic ownership is deduplicated": "standardPresentationOwnsCaseShots" in texts[performance.name],
+    "mobile tiers remain authoritative": "Application.targetFrameRate =" not in texts[performance.name],
+    "hero-only adaptive budget": "AdaptiveHeroQuality" in texts[performance.name] and "HeroPracticalLight" in texts[performance.name],
+    "surface materials are shared": "MaterialFor(color, metallic, smoothness)" in texts[core.name]
+        and "EqualHeroSurfacesShareMaterialInstances" in texts[edit_tests.name],
+    "all mesh submeshes are counted": "for (var subMesh = 0; subMesh < mesh.subMeshCount; subMesh++)" in texts[core.name],
     "four review scenes": "BakeReviewScenes" in texts[editor.name] and "HeroDistrictId" in texts[editor.name],
-    "editor coverage": "HeroSliceBakerCreatesReviewableAssets" in texts[tests.name],
-    "honest art boundary documented": "concept art" in texts[doc.name].lower() and "hero geometry" in texts[doc.name].lower(),
+    "serialization-safe anchors": "CinematicHeroSlicePrefabAnchor" in texts[editor.name]
+        and "HeroSliceReviewSceneAnchor" in texts[editor.name],
+    "playmode verifies hero boot": "HERO_SLICE_WORLD" in texts[play_tests.name]
+        and "CountAnyComponents(cameraRigType)" in texts[play_tests.name],
+    "modern non-ordering object lookup": "FindFirstObjectByType" not in hero_runtime
+        and "FindObjectsSortMode" not in hero_runtime,
+    "honest art boundary documented": "concept art" in texts[doc.name].lower()
+        and "hero geometry" in texts[doc.name].lower(),
 }
 
 failed = [name for name, passed in checks.items() if not passed]
 if failed:
     raise SystemExit("Hero-slice source contract failed: " + ", ".join(failed))
 
-for path in (core, world, performance, editor, tests):
+for path in required_files:
+    if path.suffix != ".cs":
+        continue
     text = path.read_text(encoding="utf-8")
     if text.count("{") != text.count("}"):
         raise SystemExit(f"Unbalanced braces in {path.relative_to(ROOT)}")

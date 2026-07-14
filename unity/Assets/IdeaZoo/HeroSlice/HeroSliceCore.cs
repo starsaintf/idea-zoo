@@ -107,6 +107,7 @@ namespace IdeaZoo.HeroSlice
     public static class HeroSliceUtility
     {
         private static readonly Dictionary<string, Material> Materials = new Dictionary<string, Material>(StringComparer.Ordinal);
+        private static readonly Dictionary<string, Material> EmissionMaterials = new Dictionary<string, Material>(StringComparer.Ordinal);
 
         public static Transform FindDeep(Transform root, string name)
         {
@@ -174,24 +175,41 @@ namespace IdeaZoo.HeroSlice
 
         public static void SetEmission(Renderer renderer, Color color, float intensity)
         {
-            if (renderer == null) return;
-            var material = renderer.material;
-            SetMaterialEmission(material, color, intensity);
-            if (material.HasProperty("_BaseColor")) material.SetColor("_BaseColor", Color.Lerp(color * 0.22f, color, 0.45f));
-            if (material.HasProperty("_Color")) material.SetColor("_Color", Color.Lerp(color * 0.22f, color, 0.45f));
+            if (renderer == null || renderer.sharedMaterial == null) return;
+            renderer.sharedMaterial = EmissionMaterialFor(renderer.sharedMaterial, color, intensity, true);
         }
 
         public static void SetEmissionOnly(Renderer renderer, Color color, float intensity)
         {
-            if (renderer == null) return;
-            SetMaterialEmission(renderer.material, color, intensity);
+            if (renderer == null || renderer.sharedMaterial == null) return;
+            renderer.sharedMaterial = EmissionMaterialFor(renderer.sharedMaterial, color, intensity, false);
         }
 
-        private static void SetMaterialEmission(Material material, Color color, float intensity)
+        private static Material EmissionMaterialFor(Material source, Color color, float intensity, bool tintBase)
         {
-            if (material == null || !material.HasProperty("_EmissionColor")) return;
-            material.EnableKeyword("_EMISSION");
-            material.SetColor("_EmissionColor", color * Mathf.Max(0f, intensity));
+            if (source == null) return null;
+            var clampedIntensity = Mathf.Max(0f, intensity);
+            var cacheKey = source.GetInstanceID().ToString(CultureInfo.InvariantCulture)
+                           + "|" + ColorUtility.ToHtmlStringRGBA(color)
+                           + "|" + clampedIntensity.ToString("0.000", CultureInfo.InvariantCulture)
+                           + "|" + (tintBase ? "tint" : "emission-only");
+            Material material;
+            if (EmissionMaterials.TryGetValue(cacheKey, out material) && material != null) return material;
+
+            material = new Material(source) { name = source.name + "_HeroEmission_" + cacheKey };
+            if (material.HasProperty("_EmissionColor"))
+            {
+                material.EnableKeyword("_EMISSION");
+                material.SetColor("_EmissionColor", color * clampedIntensity);
+            }
+            if (tintBase)
+            {
+                var tint = Color.Lerp(color * 0.22f, color, 0.45f);
+                if (material.HasProperty("_BaseColor")) material.SetColor("_BaseColor", tint);
+                if (material.HasProperty("_Color")) material.SetColor("_Color", tint);
+            }
+            EmissionMaterials[cacheKey] = material;
+            return material;
         }
 
         private static void ConfigureSurface(Material material, bool transparent)

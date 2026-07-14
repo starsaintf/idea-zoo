@@ -1,6 +1,6 @@
 name: Unity cloud integration
 
-# Unity 6.5 compatibility fixes applied; licensed validation rerun.
+# Campaign startup and authored-bake lifecycle fixes applied; licensed validation rerun.
 on:
   workflow_dispatch:
   push:

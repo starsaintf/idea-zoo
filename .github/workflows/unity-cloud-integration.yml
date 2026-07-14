@@ -1,0 +1,144 @@
+name: Unity cloud integration
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [unity-production-v1]
+    paths:
+      - "unity/**"
+      - ".github/workflows/unity-cloud-integration.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "unity/**"
+      - ".github/workflows/unity-cloud-integration.yml"
+
+permissions:
+  contents: read
+  checks: write
+
+concurrency:
+  group: unity-cloud-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  license-preflight:
+    runs-on: ubuntu-latest
+    outputs:
+      ready: ${{ steps.check.outputs.ready }}
+    steps:
+      - name: Check Unity cloud credentials
+        id: check
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        run: |
+          if [ -n "$UNITY_LICENSE" ] && [ -n "$UNITY_EMAIL" ] && [ -n "$UNITY_PASSWORD" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+            echo "Unity cloud credentials are configured." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            cat >> "$GITHUB_STEP_SUMMARY" <<'EOF'
+          ## Unity cloud integration is license-gated
+
+          Add `UNITY_LICENSE`, `UNITY_EMAIL`, and `UNITY_PASSWORD` under repository **Settings → Secrets and variables → Actions**. The separate **Unity manual license request** workflow generates the `.alf` request without requiring a local Unity installation.
+          EOF
+          fi
+
+  blocked-report:
+    needs: license-preflight
+    if: needs.license-preflight.outputs.ready != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create blocker report
+        run: |
+          cat > unity-cloud-blocked.md <<'EOF'
+          # Unity cloud integration blocked by licensing
+
+          The GameCI workflow is installed, but Unity cannot legally start until the repository has these Actions secrets:
+
+          - `UNITY_LICENSE` — contents of the browser-generated `.ulf` file
+          - `UNITY_EMAIL`
+          - `UNITY_PASSWORD`
+
+          Run the `Unity manual license request` workflow first. No local Unity Editor is required to generate its `.alf` artifact.
+          EOF
+      - uses: actions/upload-artifact@v4
+        with:
+          name: unity-cloud-license-blocker
+          path: unity-cloud-blocked.md
+
+  integrate-and-build:
+    needs: license-preflight
+    if: needs.license-preflight.outputs.ready == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+      UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+      UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          lfs: true
+
+      - name: Cache imported Unity Library
+        uses: actions/cache@v4
+        with:
+          path: unity/Library
+          key: unity-6000.5.0f1-${{ runner.os }}-${{ hashFiles('unity/Assets/**', 'unity/Packages/**', 'unity/ProjectSettings/**') }}
+          restore-keys: |
+            unity-6000.5.0f1-${{ runner.os }}-
+
+      - name: Import project, run EditMode and PlayMode tests
+        id: unityTests
+        uses: game-ci/unity-test-runner@v4
+        with:
+          projectPath: unity
+          unityVersion: 6000.5.0f1
+          testMode: all
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          artifactsPath: unity-test-artifacts
+          checkName: Idea Zoo Unity Editor integration
+
+      - name: Upload Unity test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: idea-zoo-unity-editor-tests
+          path: unity-test-artifacts
+          if-no-files-found: warn
+
+      - name: Verify cloud-baked presentation assets
+        run: |
+          test -f unity/Assets/IdeaZoo/Art/Prefabs/WhisperGateDistrict.prefab
+          test -f unity/Assets/IdeaZoo/Scenes/WhisperGatePresentationReview.unity
+
+      - name: Upload cloud-baked district assets
+        uses: actions/upload-artifact@v4
+        with:
+          name: idea-zoo-cloud-baked-presentation
+          path: |
+            unity/Assets/IdeaZoo/Art/Prefabs/WhisperGateDistrict.prefab
+            unity/Assets/IdeaZoo/Scenes/WhisperGatePresentationReview.unity
+
+      - name: Build WebGL player
+        uses: game-ci/unity-builder@v4
+        with:
+          projectPath: unity
+          unityVersion: 6000.5.0f1
+          targetPlatform: WebGL
+          buildsPath: build
+          buildName: IdeaZooWebGL
+          versioning: Semantic
+          allowDirtyBuild: true
+          dockerMemoryLimit: 12g
+
+      - name: Upload WebGL build
+        uses: actions/upload-artifact@v4
+        with:
+          name: idea-zoo-unity-webgl
+          path: build/WebGL
+          if-no-files-found: error

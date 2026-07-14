@@ -47,7 +47,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y blender
           python3 -m pip install --disable-pip-version-check pillow
-          python3 -c "from PIL import Image; print('Pillow', Image.__version__)"
+          python3 -c "import PIL; print('Pillow', PIL.__version__)"
           blender --version
 
       - name: Generate all modeled and rigged assets
@@ -63,7 +63,13 @@ jobs:
             --preview-output unity/ArtProduction/Previews \
             --manifest unity/ArtProduction/generated_manifest.json
 
+      - name: Inspect generated preview files
+        run: |
+          find unity/ArtProduction/Previews -type f -maxdepth 3 -printf '%p %s bytes\n' | sort
+          test "$(find unity/ArtProduction/Previews -name '*.png' -type f | wc -l)" -eq 17
+
       - name: Build complete visual contact sheet
+        continue-on-error: true
         run: |
           python3 cloud_art/make_contact_sheet.py \
             --input unity/ArtProduction/Previews \

@@ -1,0 +1,75 @@
+name: Unity production validation
+
+on:
+  push:
+    branches: [unity-production-v1]
+    paths:
+      - "unity/**"
+      - "scripts/validate_unity_*.py"
+      - ".github/workflows/unity-production-ci.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "unity/**"
+      - "scripts/validate_unity_*.py"
+      - ".github/workflows/unity-production-ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  domain-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+      - name: Compile and run engine-independent contracts
+        run: dotnet run --project unity/Tests/IdeaZoo.Domain.Contract/IdeaZoo.Domain.Contract.csproj --configuration Release
+
+  unity-structure:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate all production source passes
+        shell: bash
+        run: |
+          set +e
+          status=0
+          for validator in scripts/validate_unity_*.py; do
+            echo "==> $validator"
+            python3 "$validator" || status=1
+          done 2>&1 | tee unity-validation-report.txt
+          pipeline=${PIPESTATUS[0]}
+          if [ "$pipeline" -ne 0 ]; then status=1; fi
+          {
+            echo '## Unity validation report'
+            echo '```text'
+            cat unity-validation-report.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit "$status"
+      - name: Upload validation report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unity-validation-report
+          path: unity-validation-report.txt
+      - name: Confirm failed transport files are gone
+        run: |
+          test ! -d .unity-bootstrap
+          ! git ls-files | grep -E '(^|/)chunk-[0-9]+$|bootstrap-unity-source'
+      - name: Package reviewable Unity source
+        run: |
+          zip -qr idea-zoo-unity-production-source.zip \
+            unity \
+            scripts/validate_unity_*.py \
+            .github/workflows/unity-production-ci.yml \
+            .github/workflows/unity-cloud-integration.yml \
+            .github/workflows/unity-license-request.yml
+      - uses: actions/upload-artifact@v4
+        with:
+          name: idea-zoo-unity-production-source
+          path: idea-zoo-unity-production-source.zip

@@ -1,0 +1,51 @@
+name: Unity lifecycle autofix
+
+on:
+  push:
+    branches: [unity-production-v1]
+    paths:
+      - ".github/workflows/unity-lifecycle-autofix.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  patch-authored-world-boot:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: unity-production-v1
+          fetch-depth: 0
+
+      - name: Install authored environment directly from the game world boot
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path("unity/Assets/IdeaZoo/Runtime/IdeaZooGame.cs")
+          source = path.read_text(encoding="utf-8")
+          if "using IdeaZoo.Presentation;" not in source:
+              source = source.replace("using IdeaZoo.Core;\n", "using IdeaZoo.Core;\nusing IdeaZoo.Presentation;\n", 1)
+          old = "            _world = worldObject.AddComponent<WhisperGateWorld>();\n            _world.Build();\n"
+          new = "            _world = worldObject.AddComponent<WhisperGateWorld>();\n            _world.Build();\n            var authored = worldObject.GetComponent<AuthoredEnvironmentPass>();\n            if (authored == null) authored = worldObject.AddComponent<AuthoredEnvironmentPass>();\n            authored.Build(worldObject.transform);\n"
+          if "authored.Build(worldObject.transform);" not in source:
+              if old not in source:
+                  raise SystemExit("IdeaZooGame BuildWorld insertion marker was not found")
+              source = source.replace(old, new, 1)
+          path.write_text(source, encoding="utf-8")
+          PY
+
+      - name: Commit deterministic authored-world boot
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo "Authored-world boot patch was already applied."
+            exit 0
+          fi
+          git config user.name "Idea Zoo Cloud Fix"
+          git config user.email "actions@users.noreply.github.com"
+          git add unity/Assets/IdeaZoo/Runtime/IdeaZooGame.cs
+          git commit -m "fix(unity): build authored environment from main world lifecycle"
+          git push origin HEAD:unity-production-v1

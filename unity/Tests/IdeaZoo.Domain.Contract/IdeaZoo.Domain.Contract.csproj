@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../Assets/IdeaZoo/Core/IdeaZooDomain.cs" Link="IdeaZooDomain.cs" />
+    <Compile Include="../../Assets/IdeaZoo/Core/IdeaIntelligenceCore.cs" Link="IdeaIntelligenceCore.cs" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,74 @@
+name: Unity integration autofix
+
+on:
+  push:
+    branches: [unity-production-v1]
+    paths:
+      - ".github/workflows/unity-integration-autofix.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  patch-unity-compatibility:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: unity-production-v1
+          fetch-depth: 0
+
+      - name: Apply Unity 6.5 compatibility fixes
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import json
+
+          root = Path('unity')
+
+          manifest_path = root / 'Packages/manifest.json'
+          manifest = json.loads(manifest_path.read_text())
+          dependencies = manifest.setdefault('dependencies', {})
+          dependencies.pop('com.unity.addressables', None)
+          dependencies.pop('com.unity.inputsystem', None)
+          dependencies['com.unity.modules.unitywebrequest'] = '1.0.0'
+          manifest_path.write_text(json.dumps(manifest, indent=2) + '\n')
+
+          runtime_path = root / 'Assets/IdeaZoo/Intelligence/IdeaIntelligenceRuntime.cs'
+          runtime = runtime_path.read_text()
+          old_bytes = '            var bytes = File.ReadAllBytes(sourcePath);\n            var id = "artifact-" + Guid.NewGuid().ToString("N");'
+          new_bytes = '            var bytes = File.ReadAllBytes(sourcePath);\n            string contentHash;\n            using (var sha = System.Security.Cryptography.SHA256.Create())\n                contentHash = BitConverter.ToString(sha.ComputeHash(bytes)).Replace("-", string.Empty).ToLowerInvariant();\n            var id = "artifact-" + Guid.NewGuid().ToString("N");'
+          if old_bytes in runtime:
+              runtime = runtime.replace(old_bytes, new_bytes, 1)
+          runtime = runtime.replace(
+              'ContentHash = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(bytes)).ToLowerInvariant(),',
+              'ContentHash = contentHash,'
+          )
+          runtime_path.write_text(runtime)
+
+          factory_path = root / 'Assets/IdeaZoo/Presentation/CivicAuthoredMeshFactory.cs'
+          factory = factory_path.read_text()
+          if 'public static GameObject Create(string objectName, Mesh mesh, Material material, Transform parent)' not in factory:
+              marker = '        private static void AddBox(List<Vector3> vertices, List<int> triangles, List<Vector2> uvs, Vector3 center, Vector3 size)\n'
+              helpers = '''        // Compatibility overloads used by the production creature kit.\n        public static Mesh Ribbon(float length, float width, int segments, float phase)\n        {\n            var mesh = Ribbon(length, width, 0.12f, segments);\n            mesh.name = "Civic_Ribbon_Phase_" + phase.ToString("0.00");\n            return mesh;\n        }\n\n        public static Mesh ArchRing(float radius, float tubeRadius, int segments, float arcDegrees)\n        {\n            return TubeArc(radius, tubeRadius, arcDegrees, segments, 8);\n        }\n\n        public static GameObject Create(string objectName, Mesh mesh, Material material, Transform parent)\n        {\n            if (mesh == null) throw new ArgumentNullException("mesh");\n            var node = new GameObject(objectName, typeof(MeshFilter), typeof(MeshRenderer));\n            node.transform.SetParent(parent, false);\n            node.GetComponent<MeshFilter>().sharedMesh = mesh;\n            node.GetComponent<MeshRenderer>().sharedMaterial = material;\n            return node;\n        }\n\n'''
+              if marker not in factory:
+                  raise SystemExit('CivicAuthoredMeshFactory insertion marker was not found')
+              factory = factory.replace(marker, helpers + marker, 1)
+          factory_path.write_text(factory)
+          PY
+
+      - name: Commit compatibility patch
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo "Compatibility patch was already applied."
+            exit 0
+          fi
+          git config user.name "Idea Zoo Cloud Fix"
+          git config user.email "actions@users.noreply.github.com"
+          git add unity/Packages/manifest.json \
+                  unity/Assets/IdeaZoo/Intelligence/IdeaIntelligenceRuntime.cs \
+                  unity/Assets/IdeaZoo/Presentation/CivicAuthoredMeshFactory.cs
+          git commit -m "fix(unity): resolve first licensed Editor compilation errors"
+          git push origin HEAD:unity-production-v1

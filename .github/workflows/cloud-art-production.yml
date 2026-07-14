@@ -1,0 +1,107 @@
+name: Cloud art production
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [cloud-art-production-v1]
+    paths:
+      - "cloud_art/**"
+      - "unity/ArtProduction/**"
+      - "unity/Assets/IdeaZoo/Art/Runtime/**"
+      - "unity/Assets/IdeaZoo/Editor/CloudArtImporter.cs"
+      - "unity/Assets/IdeaZoo/Tests/EditMode/CloudArtEditorTests.cs"
+      - ".github/workflows/cloud-art-production.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "cloud_art/**"
+      - "unity/ArtProduction/**"
+      - "unity/Assets/IdeaZoo/Art/CloudGenerated/**"
+      - "unity/Assets/IdeaZoo/Art/Runtime/**"
+      - "unity/Assets/IdeaZoo/Editor/CloudArtImporter.cs"
+      - "unity/Assets/IdeaZoo/Tests/EditMode/CloudArtEditorTests.cs"
+      - ".github/workflows/cloud-art-production.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: idea-zoo-cloud-art-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  generate-and-validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.ref || github.ref_name }}
+          fetch-depth: 0
+
+      - name: Install Blender and image tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y blender python3-pil
+          blender --version
+
+      - name: Generate full rigged cast and creature families
+        run: |
+          blender --background --python cloud_art/generate_idea_zoo_assets.py -- \
+            --output unity/Assets/IdeaZoo/Art/CloudGenerated/Models \
+            --source-output unity/ArtProduction/Source \
+            --preview-output unity/ArtProduction/Previews \
+            --manifest unity/ArtProduction/generated_manifest.json
+
+      - name: Build design-package contact sheet
+        run: |
+          python3 cloud_art/make_contact_sheet.py \
+            --input unity/ArtProduction/Previews \
+            --output unity/ArtProduction/Previews/IdeaZoo_CloudArt_ContactSheet.png
+
+      - name: Validate generated assets and mobile budgets
+        run: |
+          python3 cloud_art/validate_generated_assets.py \
+            --manifest unity/ArtProduction/generated_manifest.json \
+            --repo-root "$GITHUB_WORKSPACE"
+
+      - name: Record cloud output on production branch
+        if: github.event_name == 'push'
+        run: |
+          git config user.name "Idea Zoo Cloud Art"
+          git config user.email "actions@users.noreply.github.com"
+          git add \
+            unity/Assets/IdeaZoo/Art/CloudGenerated \
+            unity/ArtProduction/Source \
+            unity/ArtProduction/Previews \
+            unity/ArtProduction/generated_manifest.json
+          if git diff --cached --quiet; then
+            echo "Cloud art output is already current."
+            exit 0
+          fi
+          git commit -m "art(cloud): generate complete rigged cast and creature package"
+          git push origin HEAD:cloud-art-production-v1
+
+      - name: Upload complete design and model package
+        uses: actions/upload-artifact@v4
+        with:
+          name: idea-zoo-complete-cloud-art-package
+          path: |
+            unity/Assets/IdeaZoo/Art/CloudGenerated
+            unity/ArtProduction
+          if-no-files-found: error
+
+      - name: Publish build summary
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          data = json.loads(Path('unity/ArtProduction/generated_manifest.json').read_text())
+          with open(Path(os.environ['GITHUB_STEP_SUMMARY']), 'a', encoding='utf-8') as out:
+              out.write('# Idea Zoo cloud art production\n\n')
+              out.write(f"Generated and validated **{data['asset_count']}** rigged assets.\n\n")
+              out.write(f"- Characters: {len(data['characters'])}\n")
+              out.write(f"- Creature families: {len(data['creatures'])}\n")
+              out.write('- Editable Blender sources, FBX, GLB, PNG previews and a contact sheet are included.\n')
+          PY

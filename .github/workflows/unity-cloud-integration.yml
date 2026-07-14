@@ -1,6 +1,6 @@
 name: Unity cloud integration
 
-# Authored environment now boots directly from IdeaZooGame; licensed validation rerun.
+# Licensed editor validation, runtime tests, review-asset baking and WebGL build.
 on:
   workflow_dispatch:
   push:
@@ -112,10 +112,16 @@ jobs:
           path: unity-test-artifacts
           if-no-files-found: warn
 
-      - name: Verify cloud-baked presentation assets
+      - name: Verify all cloud-baked presentation assets
         run: |
           test -f unity/Assets/IdeaZoo/Art/Prefabs/WhisperGateDistrict.prefab
           test -f unity/Assets/IdeaZoo/Scenes/WhisperGatePresentationReview.unity
+          test -f unity/Assets/IdeaZoo/HeroSlice/Prefabs/CinematicHeroSlice.prefab
+          test -f unity/Assets/IdeaZoo/HeroSlice/HERO_SLICE_MANIFEST.json
+          test -f unity/Assets/IdeaZoo/Scenes/Hero_ZooEntrance.unity
+          test -f unity/Assets/IdeaZoo/Scenes/Hero_LanternFields.unity
+          test -f unity/Assets/IdeaZoo/Scenes/Hero_SilentStacks.unity
+          test -f unity/Assets/IdeaZoo/Scenes/Hero_EvidenceForge.unity
 
       - name: Upload cloud-baked district assets
         uses: actions/upload-artifact@v4
@@ -124,6 +130,12 @@ jobs:
           path: |
             unity/Assets/IdeaZoo/Art/Prefabs/WhisperGateDistrict.prefab
             unity/Assets/IdeaZoo/Scenes/WhisperGatePresentationReview.unity
+            unity/Assets/IdeaZoo/HeroSlice/Prefabs/CinematicHeroSlice.prefab
+            unity/Assets/IdeaZoo/HeroSlice/HERO_SLICE_MANIFEST.json
+            unity/Assets/IdeaZoo/Scenes/Hero_ZooEntrance.unity
+            unity/Assets/IdeaZoo/Scenes/Hero_LanternFields.unity
+            unity/Assets/IdeaZoo/Scenes/Hero_SilentStacks.unity
+            unity/Assets/IdeaZoo/Scenes/Hero_EvidenceForge.unity
 
       - name: Build WebGL player
         uses: game-ci/unity-builder@v4

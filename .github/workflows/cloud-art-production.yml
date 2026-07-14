@@ -48,9 +48,20 @@ jobs:
           blender --background --python-expr "import numpy; print('Blender NumPy', numpy.__version__)"
           blender --version
 
-      - name: Generate refined rigged cast and creature families
+      - name: Remove every previously generated output
         run: |
+          rm -rf \
+            unity/Assets/IdeaZoo/Art/CloudGenerated \
+            unity/ArtProduction/Source \
+            unity/ArtProduction/Previews \
+            unity/ArtProduction/generated_manifest.json \
+            unity/ArtProduction/blender-generation.log
           mkdir -p unity/ArtProduction
+
+      - name: Generate refined rigged cast and creature families
+        env:
+          PYTHONPATH: ${{ github.workspace }}/cloud_art
+        run: |
           blender --background --python cloud_art/generate_idea_zoo_assets_v2.py -- \
             --output unity/Assets/IdeaZoo/Art/CloudGenerated/Models \
             --source-output unity/ArtProduction/Source \
@@ -58,33 +69,34 @@ jobs:
             --manifest unity/ArtProduction/generated_manifest.json \
             > unity/ArtProduction/blender-generation.log 2>&1
           tail -80 unity/ArtProduction/blender-generation.log
+          ! grep -q "Traceback" unity/ArtProduction/blender-generation.log
           test -s unity/ArtProduction/generated_manifest.json
 
       - name: Inspect generated files
         run: |
-          echo "PNG count: $(find unity/ArtProduction/Previews -name '*.png' -type f 2>/dev/null | wc -l)"
-          echo "FBX count: $(find unity/Assets/IdeaZoo/Art/CloudGenerated -name '*.fbx' -type f 2>/dev/null | wc -l)"
-          echo "BLEND count: $(find unity/ArtProduction/Source -name '*.blend' -type f 2>/dev/null | wc -l)"
-          echo "GLB count: $(find unity/ArtProduction/Source -name '*.glb' -type f 2>/dev/null | wc -l)"
-          find unity/ArtProduction/Previews -type f -maxdepth 3 -printf '%p %s bytes\n' 2>/dev/null | sort || true
+          test "$(find unity/ArtProduction/Previews -name '*.png' -type f | wc -l)" -eq 17
+          test "$(find unity/Assets/IdeaZoo/Art/CloudGenerated -name '*.fbx' -type f | wc -l)" -eq 17
+          test "$(find unity/ArtProduction/Source -name '*.blend' -type f | wc -l)" -eq 17
+          test "$(find unity/ArtProduction/Source -name '*.glb' -type f | wc -l)" -eq 17
+          echo "PNG count: $(find unity/ArtProduction/Previews -name '*.png' -type f | wc -l)"
+          echo "FBX count: $(find unity/Assets/IdeaZoo/Art/CloudGenerated -name '*.fbx' -type f | wc -l)"
+          echo "BLEND count: $(find unity/ArtProduction/Source -name '*.blend' -type f | wc -l)"
+          echo "GLB count: $(find unity/ArtProduction/Source -name '*.glb' -type f | wc -l)"
 
       - name: Build design-package contact sheet
-        continue-on-error: true
         run: |
           python3 cloud_art/make_contact_sheet.py \
             --input unity/ArtProduction/Previews \
             --output unity/ArtProduction/Previews/IdeaZoo_CloudArt_ContactSheet.png
 
       - name: Validate generated assets and mobile budgets
-        id: validate
-        continue-on-error: true
         run: |
           python3 cloud_art/validate_generated_assets.py \
             --manifest unity/ArtProduction/generated_manifest.json \
             --repo-root "$GITHUB_WORKSPACE"
 
       - name: Record valid cloud output on production branch
-        if: github.event_name == 'push' && steps.validate.outcome == 'success'
+        if: github.event_name == 'push'
         run: |
           git config user.name "Idea Zoo Cloud Art"
           git config user.email "actions@users.noreply.github.com"
@@ -110,24 +122,17 @@ jobs:
             unity/ArtProduction
           if-no-files-found: error
 
-      - name: Fail when asset validation failed
-        if: steps.validate.outcome != 'success'
-        run: exit 1
-
       - name: Publish build summary
-        if: steps.validate.outcome == 'success'
         run: |
           python3 - <<'PY'
           import json
           import os
           from pathlib import Path
           data = json.loads(Path('unity/ArtProduction/generated_manifest.json').read_text())
-          contact = Path('unity/ArtProduction/Previews/IdeaZoo_CloudArt_ContactSheet.png').exists()
           with open(Path(os.environ['GITHUB_STEP_SUMMARY']), 'a', encoding='utf-8') as out:
               out.write('# Idea Zoo refined cloud art production\n\n')
               out.write(f"Generated and validated **{data['asset_count']}** rigged assets.\n\n")
               out.write(f"- Characters: {len(data['characters'])}\n")
               out.write(f"- Creature families: {len(data['creatures'])}\n")
-              out.write('- Editable Blender sources, FBX, GLB and individual PNG previews are included.\n')
-              out.write(f"- Contact sheet: {'included' if contact else 'pending collage-only repair'}\n")
+              out.write('- Editable Blender sources, FBX, GLB, individual PNG previews and a contact sheet are included.\n')
           PY

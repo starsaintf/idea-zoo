@@ -1,6 +1,6 @@
 #if UNITY_EDITOR
 using System;
-using IdeaZoo.HeroSlice;
+using System.Reflection;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
@@ -32,7 +32,9 @@ namespace IdeaZoo.Tests.EditMode
 
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath);
             Assert.NotNull(prefab, "Hero-slice runtime prefab was not baked.");
-            Assert.NotNull(prefab.GetComponent<CinematicHeroSlicePrefabAnchor>(), "Baked prefab lost its serialization-safe anchor.");
+            var anchorType = Type.GetType("IdeaZoo.HeroSlice.CinematicHeroSlicePrefabAnchor, Assembly-CSharp");
+            Assert.NotNull(anchorType, "Serialization-safe prefab anchor type was not imported.");
+            Assert.NotNull(prefab.GetComponent(anchorType), "Baked prefab lost its serialization-safe anchor.");
 
             foreach (var district in new[] { "ZooEntrance", "LanternFields", "SilentStacks", "EvidenceForge" })
             {
@@ -57,12 +59,27 @@ namespace IdeaZoo.Tests.EditMode
         [Test]
         public void EqualHeroSurfacesShareMaterialInstances()
         {
+            var utilityType = Type.GetType("IdeaZoo.HeroSlice.HeroSliceUtility, Assembly-CSharp");
+            Assert.NotNull(utilityType, "HeroSliceUtility type was not imported.");
+            var primitive = utilityType.GetMethod("Primitive", BindingFlags.Public | BindingFlags.Static);
+            Assert.NotNull(primitive, "Hero primitive factory is missing.");
+
             var root = new GameObject("HeroMaterialSharingTest");
             try
             {
                 var color = new Color(0.16f, 0.27f, 0.38f, 1f);
-                var first = HeroSliceUtility.Primitive(root.transform, "UniqueObjectA", PrimitiveType.Cube, Vector3.zero, Vector3.one, color, 0.4f, 0.7f);
-                var second = HeroSliceUtility.Primitive(root.transform, "UniqueObjectB", PrimitiveType.Sphere, Vector3.right, Vector3.one, color, 0.4f, 0.7f);
+                var first = primitive.Invoke(null, new object[]
+                {
+                    root.transform, "UniqueObjectA", PrimitiveType.Cube, Vector3.zero, Vector3.one,
+                    color, 0.4f, 0.7f, true
+                }) as GameObject;
+                var second = primitive.Invoke(null, new object[]
+                {
+                    root.transform, "UniqueObjectB", PrimitiveType.Sphere, Vector3.right, Vector3.one,
+                    color, 0.4f, 0.7f, true
+                }) as GameObject;
+                Assert.NotNull(first);
+                Assert.NotNull(second);
                 Assert.AreSame(
                     first.GetComponent<Renderer>().sharedMaterial,
                     second.GetComponent<Renderer>().sharedMaterial,

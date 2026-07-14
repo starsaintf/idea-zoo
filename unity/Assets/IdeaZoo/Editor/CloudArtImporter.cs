@@ -64,9 +64,6 @@ namespace IdeaZoo.EditorTools
             if (model == null) throw new InvalidOperationException("Cloud-generated model is missing: " + modelPath);
             var instance = UnityEngine.Object.Instantiate(model);
             instance.name = id;
-            var metadata = instance.GetComponent<CloudArtAssetMetadata>() ?? instance.AddComponent<CloudArtAssetMetadata>();
-            metadata.AssetId = id;
-            metadata.Category = category;
             ConfigureRenderers(instance);
             ValidateHierarchy(instance.transform, id, category);
             var prefabPath = ResourceRoot + "/" + category + "/" + id + ".prefab";

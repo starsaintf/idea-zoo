@@ -36,17 +36,20 @@ Hatching, evidence inspection, Molt, Decision and ruling moments now use Playabl
 
 Procedural civic ambience and stage cues are also present. The next milestone is authored Timeline assets, voice performances, animation clips and final sound design.
 
-## Slice 5 — device gate — pending physical hardware
+## Slice 5 — Unity editor and device gate — pending external tooling
 
-A release candidate must pass on a physical iPhone:
+The next real production gate is not more source-only simulation. It is opening the project in Unity 6000.5.0f1 and completing:
 
-- fifteen-minute stable session;
+- package resolution and script compilation;
+- shader import and material review;
+- district prefab and review-scene bake;
+- Play Mode completion of three different idea cases;
+- iOS player build on macOS;
+- fifteen-minute stable session on a physical iPhone;
 - safe-area and software-keyboard checks;
-- suspend/resume and tab restoration;
-- archive survival;
+- suspend/resume and archive survival;
 - 30 FPS thermal profile;
-- no accidental ruling or duplicate evidence;
-- three complete cases without restarting the app.
+- no accidental ruling or duplicate evidence.
 
 ## Production rule
 

@@ -29,7 +29,11 @@ namespace IdeaZoo.Presentation
             var renderer = node.GetComponent<Renderer>();
             if (renderer != null) renderer.sharedMaterial = CivicMaterialLibrary.Get(surface);
             var existing = node.GetComponent<Collider>();
-            if (!collider && existing != null) Object.Destroy(existing);
+            if (!collider && existing != null)
+            {
+                if (Application.isPlaying) Object.Destroy(existing);
+                else Object.DestroyImmediate(existing);
+            }
             return node;
         }
 
@@ -52,54 +56,33 @@ namespace IdeaZoo.Presentation
         {
             var root = new GameObject(name).transform;
             root.SetParent(parent, false);
+            Beam(root, "TopRail", start + Vector3.up * 0.78f, end + Vector3.up * 0.78f, 0.07f, CivicSurface.Brass);
             for (var i = 0; i <= posts; i++)
             {
-                var t = posts == 0 ? 0f : i / (float)posts;
-                var position = Vector3.Lerp(start, end, t);
-                Cylinder(root, "Post_" + i, position + Vector3.up * 0.65f, new Vector3(0.06f, 0.65f, 0.06f), CivicSurface.Brass);
+                var p = Vector3.Lerp(start, end, i / (float)Mathf.Max(1, posts));
+                Cylinder(root, "Post_" + i, p + Vector3.up * 0.39f, new Vector3(0.09f, 0.78f, 0.09f), CivicSurface.Brass);
             }
-            Beam(root, "TopRail", start + Vector3.up * 1.25f, end + Vector3.up * 1.25f, 0.09f, CivicSurface.Brass);
-            Beam(root, "MidRail", start + Vector3.up * 0.63f, end + Vector3.up * 0.63f, 0.045f, CivicSurface.Brass);
             return root;
         }
 
-        public static GameObject Beam(Transform parent, string name, Vector3 start, Vector3 end, float width, CivicSurface surface)
-        {
-            var direction = end - start;
-            var beam = Box(parent, name, (start + end) * 0.5f, new Vector3(width, width, direction.magnitude), surface);
-            if (direction.sqrMagnitude > 0.0001f) beam.transform.rotation = Quaternion.LookRotation(direction.normalized, Vector3.up);
-            return beam;
-        }
-
-        public static Transform PipeRun(Transform parent, string name, Vector3[] points, float radius, CivicSurface surface)
+        public static Transform PipeRun(Transform parent, string name, Vector3[] points, float width, CivicSurface surface)
         {
             var root = new GameObject(name).transform;
             root.SetParent(parent, false);
-            for (var i = 0; i < points.Length - 1; i++)
-            {
-                var start = points[i];
-                var end = points[i + 1];
-                var direction = end - start;
-                var segment = Cylinder(root, "Pipe_" + i, (start + end) * 0.5f,
-                    new Vector3(radius, direction.magnitude * 0.5f, radius), surface);
-                if (direction.sqrMagnitude > 0.0001f) segment.transform.rotation = Quaternion.FromToRotation(Vector3.up, direction.normalized);
-                Sphere(root, "Joint_" + i, start, Vector3.one * radius * 2.3f, surface);
-            }
-            if (points.Length > 0) Sphere(root, "Joint_End", points[points.Length - 1], Vector3.one * radius * 2.3f, surface);
+            for (var i = 0; i < points.Length - 1; i++) Beam(root, "Segment_" + i, points[i], points[i + 1], width, surface);
+            for (var i = 1; i < points.Length - 1; i++) Sphere(root, "Joint_" + i, points[i], Vector3.one * width * 1.7f, surface);
             return root;
         }
 
-        public static Transform Workbench(Transform parent, string name, Vector3 position, Vector3 scale, CivicSurface surface)
+        public static Transform Workbench(Transform parent, string name, Vector3 position, Vector3 size, CivicSurface surface)
         {
             var root = new GameObject(name).transform;
             root.SetParent(parent, false);
             root.localPosition = position;
-            Box(root, "Top", new Vector3(0f, 0.85f, 0f), new Vector3(scale.x, 0.16f, scale.z), surface, true);
-            for (var sx = -1; sx <= 1; sx += 2)
-                for (var sz = -1; sz <= 1; sz += 2)
-                    Box(root, "Leg_" + sx + "_" + sz,
-                        new Vector3(sx * scale.x * 0.38f, 0.42f, sz * scale.z * 0.35f),
-                        new Vector3(0.13f, 0.84f, 0.13f), CivicSurface.Brass, true);
+            Box(root, "Top", new Vector3(0f, size.y, 0f), new Vector3(size.x, 0.12f, size.z), surface);
+            for (var x = -1; x <= 1; x += 2)
+                for (var z = -1; z <= 1; z += 2)
+                    Cylinder(root, "Leg_" + x + "_" + z, new Vector3(x * size.x * 0.38f, size.y * 0.5f, z * size.z * 0.36f), new Vector3(0.12f, size.y, 0.12f), CivicSurface.Brass);
             return root;
         }
 
@@ -108,9 +91,8 @@ namespace IdeaZoo.Presentation
             var root = new GameObject(name).transform;
             root.SetParent(parent, false);
             root.localPosition = position;
-            Box(root, "Plinth", new Vector3(0f, size.y * 0.12f, 0f), new Vector3(size.x * 1.08f, size.y * 0.24f, size.z * 1.08f), CivicSurface.Brass, true);
-            Box(root, "Glass", new Vector3(0f, size.y * 0.65f, 0f), size, CivicSurface.Glass);
-            Sphere(root, "SpecimenGlow", new Vector3(0f, size.y * 0.66f, 0f), Vector3.one * Mathf.Min(size.x, size.z) * 0.30f, CivicSurface.TealGlow);
+            Box(root, "Plinth", new Vector3(0f, 0.18f, 0f), new Vector3(size.x * 1.1f, 0.36f, size.z * 1.1f), CivicSurface.Brass);
+            Box(root, "Glass", new Vector3(0f, size.y * 0.5f + 0.32f, 0f), size, CivicSurface.Glass);
             return root;
         }
 
@@ -119,59 +101,22 @@ namespace IdeaZoo.Presentation
             var root = new GameObject(name).transform;
             root.SetParent(parent, false);
             root.localPosition = position;
-            const int columns = 8;
-            var vertices = new Vector3[(columns + 1) * 2];
-            var triangles = new int[columns * 6];
-            var uvs = new Vector2[vertices.Length];
-            for (var i = 0; i <= columns; i++)
+            for (var i = 0; i < 5; i++)
             {
-                var t = i / (float)columns;
-                var x = Mathf.Lerp(-size.x * 0.5f, size.x * 0.5f, t);
-                var z = Mathf.Sin(t * Mathf.PI) * curl;
-                vertices[i * 2] = new Vector3(x, size.y * 0.5f, z);
-                vertices[i * 2 + 1] = new Vector3(x, -size.y * 0.5f, z + Mathf.Sin(t * Mathf.PI * 2f) * curl * 0.22f);
-                uvs[i * 2] = new Vector2(t, 1f);
-                uvs[i * 2 + 1] = new Vector2(t, 0f);
-                if (i == columns) continue;
-                var index = i * 6;
-                var v = i * 2;
-                triangles[index] = v;
-                triangles[index + 1] = v + 2;
-                triangles[index + 2] = v + 1;
-                triangles[index + 3] = v + 2;
-                triangles[index + 4] = v + 3;
-                triangles[index + 5] = v + 1;
+                var y = size.y * (0.5f - (i + 0.5f) / 5f);
+                var depth = Mathf.Sin(i / 4f * Mathf.PI) * curl;
+                Box(root, "Fold_" + i, new Vector3(0f, y, depth), new Vector3(size.x, size.y / 5f + 0.015f, 0.05f), surface);
             }
-            var mesh = new Mesh { name = name + "_Mesh", vertices = vertices, triangles = triangles, uv = uvs };
-            mesh.RecalculateNormals();
-            mesh.RecalculateBounds();
-            root.gameObject.AddComponent<MeshFilter>().sharedMesh = mesh;
-            root.gameObject.AddComponent<MeshRenderer>().sharedMaterial = CivicMaterialLibrary.Get(surface);
             return root;
         }
-    }
 
-    public sealed class CivicAmbientMotion : MonoBehaviour
-    {
-        public Vector3 Axis = Vector3.up;
-        public float Degrees = 5f;
-        public float Speed = 0.5f;
-        public float Bob = 0.08f;
-        public float Phase;
-        private Quaternion _startRotation;
-        private Vector3 _startPosition;
-
-        private void Awake()
+        public static GameObject Beam(Transform parent, string name, Vector3 start, Vector3 end, float width, CivicSurface surface)
         {
-            _startRotation = transform.localRotation;
-            _startPosition = transform.localPosition;
-        }
-
-        private void Update()
-        {
-            var wave = Mathf.Sin(Time.time * Speed + Phase);
-            transform.localRotation = _startRotation * Quaternion.AngleAxis(wave * Degrees, Axis.normalized);
-            transform.localPosition = _startPosition + Vector3.up * (wave * Bob);
+            var midpoint = (start + end) * 0.5f;
+            var direction = end - start;
+            var beam = Cylinder(parent, name, midpoint, new Vector3(width, direction.magnitude * 0.5f, width), surface);
+            if (direction.sqrMagnitude > 0.0001f) beam.transform.up = direction.normalized;
+            return beam;
         }
     }
 }

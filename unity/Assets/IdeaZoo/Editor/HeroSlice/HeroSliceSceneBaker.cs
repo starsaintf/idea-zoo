@@ -22,7 +22,7 @@ namespace IdeaZoo.EditorTools
             EnsureFolder("Assets/IdeaZoo/HeroSlice/Prefabs");
 
             var root = new GameObject("CINEMATIC_HERO_SLICE");
-            root.AddComponent<CinematicHeroSliceDirector>();
+            root.AddComponent<CinematicHeroSlicePrefabAnchor>();
             PrefabUtility.SaveAsPrefabAsset(root, PrefabPath);
             UnityEngine.Object.DestroyImmediate(root);
             AssetDatabase.SaveAssets();
@@ -53,8 +53,8 @@ namespace IdeaZoo.EditorTools
         {
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(PrefabPath);
             if (prefab == null) throw new InvalidOperationException("Hero-slice runtime prefab is missing.");
-            if (prefab.GetComponent<CinematicHeroSliceDirector>() == null)
-                throw new InvalidOperationException("Hero-slice runtime prefab is missing CinematicHeroSliceDirector.");
+            if (prefab.GetComponent<CinematicHeroSlicePrefabAnchor>() == null)
+                throw new InvalidOperationException("Hero-slice runtime prefab is missing its serialization-safe anchor.");
 
             foreach (HeroDistrictId district in Enum.GetValues(typeof(HeroDistrictId)))
             {
@@ -66,7 +66,9 @@ namespace IdeaZoo.EditorTools
             var runtimeType = Type.GetType("IdeaZoo.HeroSlice.HeroCreatureTransformationDirector, Assembly-CSharp");
             var worldType = Type.GetType("IdeaZoo.HeroSlice.HeroWorldProductionPass, Assembly-CSharp");
             var performanceType = Type.GetType("IdeaZoo.HeroSlice.HeroCharacterPerformanceDirector, Assembly-CSharp");
-            if (runtimeType == null || worldType == null || performanceType == null)
+            var prefabAnchorType = Type.GetType("IdeaZoo.HeroSlice.CinematicHeroSlicePrefabAnchor, Assembly-CSharp");
+            var reviewAnchorType = Type.GetType("IdeaZoo.HeroSlice.HeroSliceReviewSceneAnchor, Assembly-CSharp");
+            if (runtimeType == null || worldType == null || performanceType == null || prefabAnchorType == null || reviewAnchorType == null)
                 throw new InvalidOperationException("Hero-slice runtime types did not compile into Assembly-CSharp.");
 
             Debug.Log("HERO_SLICE_BAKED_ASSETS_VALID");
@@ -77,7 +79,7 @@ namespace IdeaZoo.EditorTools
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             var root = new GameObject("HERO_REVIEW_" + district.ToString().ToUpperInvariant());
             root.AddComponent<IdeaZooGame>();
-            var review = root.AddComponent<HeroSliceReviewBootstrap>();
+            var review = root.AddComponent<HeroSliceReviewSceneAnchor>();
             review.District = district;
             review.AutoFrame = true;
 

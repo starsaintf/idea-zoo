@@ -23,7 +23,7 @@ namespace IdeaZoo.Presentation
             DressBurrowerTunnel(Find("06_BURROWER_TUNNEL"));
             DressRefusalGate(Find("07_REFUSAL_GATE"));
             DressMoltHouse(Find("08_MOLT_HOUSE"));
-            DressBoardWing(Find("09_BOARD_WING"));
+            DressBoardWing(Find("09_SEALED_BOARD_WING"));
             DressDecisionGarden(Find("10_DECISION_GARDEN"));
             DressTerrariumPaths();
         }
@@ -139,10 +139,7 @@ namespace IdeaZoo.Presentation
             if (root == null) return;
             CivicKit.PipeRun(root, "Burden_Main", new[] { new Vector3(-4.5f, 0.3f, 1f), new Vector3(-4.5f, 3.4f, 1f), new Vector3(-4.5f, 3.4f, -12f) }, 0.16f, CivicSurface.Brass);
             CivicKit.PipeRun(root, "Burden_Overflow", new[] { new Vector3(4.5f, 0.3f, 1f), new Vector3(4.5f, 2.6f, 1f), new Vector3(2.5f, 2.6f, -6f), new Vector3(4.5f, 1.3f, -12f) }, 0.12f, CivicSurface.Rust);
-            for (var i = 0; i < 14; i++)
-            {
-                CivicKit.Box(root, "Maintenance_Tag_" + i, new Vector3((i % 2 == 0 ? -2.7f : 2.7f), 0.5f + (i % 4) * 0.34f, -0.4f - i * 0.78f), new Vector3(0.8f, 0.22f, 0.06f), CivicSurface.Paper);
-            }
+            for (var i = 0; i < 14; i++) CivicKit.Box(root, "Maintenance_Tag_" + i, new Vector3((i % 2 == 0 ? -2.7f : 2.7f), 0.5f + (i % 4) * 0.34f, -0.4f - i * 0.78f), new Vector3(0.8f, 0.22f, 0.06f), CivicSurface.Paper);
             AddWords(root, "WHO CLEANS UP WHEN IT WORKS?", new Vector3(0f, 3.3f, -7.5f), 0.17f, CivicSurface.TealGlow);
         }
 

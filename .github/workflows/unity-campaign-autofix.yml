@@ -24,41 +24,31 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
 
-          campaign_path = Path('unity/Assets/IdeaZoo/Story/CampaignProduction.cs')
-          campaign = campaign_path.read_text()
+          campaign_path = Path("unity/Assets/IdeaZoo/Story/CampaignProduction.cs")
+          campaign = campaign_path.read_text(encoding="utf-8")
           campaign = campaign.replace(
-              '        private readonly CampaignSaveService _save = new CampaignSaveService();\n',
-              '        private CampaignSaveService _save;\n'
+              "        private readonly CampaignSaveService _save = new CampaignSaveService();\n",
+              "        private CampaignSaveService _save;\n",
           )
-          start = '        private IEnumerator Start()\n'
-          awake = '''        private void Awake()
-        {
-            _save = new CampaignSaveService();
-        }
-
-'''
+          awake = "        private void Awake()\n        {\n            _save = new CampaignSaveService();\n        }\n\n"
+          start = "        private IEnumerator Start()\n"
           if awake not in campaign:
               if start not in campaign:
-                  raise SystemExit('Campaign Start insertion marker was not found')
+                  raise SystemExit("Campaign Start insertion marker was not found")
               campaign = campaign.replace(start, awake + start, 1)
-          campaign_path.write_text(campaign)
+          campaign_path.write_text(campaign, encoding="utf-8")
 
-          baker_path = Path('unity/Assets/IdeaZoo/Editor/IdeaZooPresentationBaker.cs')
-          baker = baker_path.read_text()
-          old = '''            var authoredRoot = FindChild(prefab.transform, "AUTHORED_ENVIRONMENT_KIT");
-            var authoredMeshes = authoredRoot == null ? 0 : authoredRoot.GetComponentsInChildren<MeshFilter>(true).Length;
-'''
-          new = '''            var authoredMeshes = 0;
-            foreach (var child in prefab.GetComponentsInChildren<Transform>(true))
-                if (child.name == "AUTHORED_ENVIRONMENT_KIT" || child.name.Contains("_Authored")) authoredMeshes++;
-'''
-          if old in baker:
-              baker = baker.replace(old, new, 1)
+          baker_path = Path("unity/Assets/IdeaZoo/Editor/IdeaZooPresentationBaker.cs")
+          baker = baker_path.read_text(encoding="utf-8")
           baker = baker.replace(
-              'if (authoredMeshes < 24) throw new UnityException("Baked district is missing the authored environment kit.");',
-              'if (authoredMeshes < 10) throw new UnityException("Baked district is missing authored department structures.");'
+              "            var authoredRoot = FindChild(prefab.transform, \"AUTHORED_ENVIRONMENT_KIT\");\n            var authoredMeshes = authoredRoot == null ? 0 : authoredRoot.GetComponentsInChildren<MeshFilter>(true).Length;\n",
+              "            var authoredMeshes = 0;\n            foreach (var child in prefab.GetComponentsInChildren<Transform>(true))\n                if (child.name == \"AUTHORED_ENVIRONMENT_KIT\" || child.name.Contains(\"_Authored\")) authoredMeshes++;\n",
           )
-          baker_path.write_text(baker)
+          baker = baker.replace(
+              "if (authoredMeshes < 24) throw new UnityException(\"Baked district is missing the authored environment kit.\");",
+              "if (authoredMeshes < 10) throw new UnityException(\"Baked district is missing authored department structures.\");",
+          )
+          baker_path.write_text(baker, encoding="utf-8")
           PY
 
       - name: Commit runtime integration patch

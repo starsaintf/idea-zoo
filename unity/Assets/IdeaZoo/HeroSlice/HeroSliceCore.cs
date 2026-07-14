@@ -189,7 +189,7 @@ namespace IdeaZoo.HeroSlice
         {
             if (source == null) return null;
             var clampedIntensity = Mathf.Max(0f, intensity);
-            var cacheKey = source.GetInstanceID().ToString(CultureInfo.InvariantCulture)
+            var cacheKey = source.GetEntityId().ToString()
                            + "|" + ColorUtility.ToHtmlStringRGBA(color)
                            + "|" + clampedIntensity.ToString("0.000", CultureInfo.InvariantCulture)
                            + "|" + (tintBase ? "tint" : "emission-only");

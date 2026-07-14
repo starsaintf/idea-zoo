@@ -95,8 +95,10 @@ check("license-preflight" in cloud and "blocked-report" in cloud, "cloud workflo
 check("allowDirtyBuild: true" in cloud, "WebGL build may reject cloud-baked assets as a dirty workspace")
 
 license_flow = texts["license_workflow"]
-check("game-ci/unity-request-activation@v2" in license_flow, "browser-only Unity activation request is missing")
+check("unityci/editor:ubuntu-6000.5.0f1-base-3" in license_flow, "browser-only Unity activation does not pin the cloud editor image")
+check("-createManualActivationFile" in license_flow, "browser-only Unity activation request command is missing")
 check("idea-zoo-unity-manual-activation-request" in license_flow, "activation request is not uploaded as an artifact")
+check("unity-license-output/*.alf" in license_flow, "activation workflow does not require an actual .alf file")
 
 for name, source in texts.items():
     if not name.endswith("workflow") and paths[name].suffix == ".cs":

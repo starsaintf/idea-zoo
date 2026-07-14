@@ -9,6 +9,7 @@ using UnityEngine;
 
 namespace IdeaZoo.HeroSlice
 {
+    [DefaultExecutionOrder(980)]
     [DisallowMultipleComponent]
     public sealed class HeroCharacterPerformanceDirector : MonoBehaviour
     {
@@ -72,17 +73,17 @@ namespace IdeaZoo.HeroSlice
             }
         }
 
-        public void SignalTransformation(bool safe)
+        public void SignalTransformation(bool hopeful)
         {
             if (_keeper != null)
             {
-                _keeper.SetEmotion(safe ? CharacterEmotion.Hopeful : CharacterEmotion.Concerned);
-                _keeper.Perform(safe ? CharacterGesture.Celebrate : CharacterGesture.Refuse, 1.8f);
+                _keeper.SetEmotion(hopeful ? CharacterEmotion.Hopeful : CharacterEmotion.Grieving);
+                _keeper.Perform(hopeful ? CharacterGesture.Celebrate : CharacterGesture.Mourn, 1.8f);
             }
             if (_mara != null)
             {
-                _mara.SetEmotion(safe ? CharacterEmotion.Hopeful : CharacterEmotion.Protective);
-                _mara.Perform(safe ? CharacterGesture.Invite : CharacterGesture.Refuse, 1.8f);
+                _mara.SetEmotion(hopeful ? CharacterEmotion.Hopeful : CharacterEmotion.Concerned);
+                _mara.Perform(hopeful ? CharacterGesture.Invite : CharacterGesture.Refuse, 1.8f);
             }
         }
 
@@ -90,7 +91,7 @@ namespace IdeaZoo.HeroSlice
         {
             if (_game == null) return;
             _keeper = _game.Keeper != null ? _game.Keeper.GetComponent<CharacterPerformanceRig>() : null;
-            var specialists = FindObjectsByType<ProceduralSpecialist>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            var specialists = FindObjectsByType<ProceduralSpecialist>(FindObjectsInactive.Include);
             var mara = specialists.FirstOrDefault(item => item != null && item.SpecialistName.IndexOf("Mara", StringComparison.OrdinalIgnoreCase) >= 0);
             _mara = mara != null ? mara.GetComponent<CharacterPerformanceRig>() : null;
 
@@ -100,12 +101,17 @@ namespace IdeaZoo.HeroSlice
 
         private void ApplyStagePerformance(CaseStage stage)
         {
+            var ruling = _game != null && _game.Director != null && _game.Director.Profile != null
+                ? _game.Director.Profile.FinalRuling
+                : null;
+            var hopeful = HeroRulingSemantics.IsHopeful(ruling);
+
             if (_keeper != null)
             {
                 var emotion = CharacterEmotion.Curious;
                 if (stage == CaseStage.Molt) emotion = CharacterEmotion.Concerned;
                 if (stage == CaseStage.Decision) emotion = CharacterEmotion.Defiant;
-                if (stage == CaseStage.Complete) emotion = CharacterEmotion.Hopeful;
+                if (stage == CaseStage.Complete) emotion = hopeful ? CharacterEmotion.Hopeful : CharacterEmotion.Grieving;
                 _keeper.SetEmotion(emotion);
             }
 
@@ -113,7 +119,7 @@ namespace IdeaZoo.HeroSlice
             {
                 var emotion = CharacterEmotion.Protective;
                 if (stage == CaseStage.Decision) emotion = CharacterEmotion.Concerned;
-                if (stage == CaseStage.Complete) emotion = CharacterEmotion.Hopeful;
+                if (stage == CaseStage.Complete) emotion = hopeful ? CharacterEmotion.Hopeful : CharacterEmotion.Concerned;
                 _mara.SetEmotion(emotion);
             }
         }
@@ -125,6 +131,24 @@ namespace IdeaZoo.HeroSlice
             var risk = 1f - Mathf.Clamp01((float)profile.Metrics.Safety);
             if (_mara != null && risk > 0.55f) _mara.Perform(CharacterGesture.Refuse, 0.8f);
             else if (_keeper != null) _keeper.Perform(CharacterGesture.Inspect, 0.75f);
+        }
+    }
+
+    internal static class HeroRulingSemantics
+    {
+        public static bool IsHopeful(Ruling? ruling)
+        {
+            return ruling == Ruling.Build || ruling == Ruling.Molt || ruling == Ruling.Sanctuary;
+        }
+
+        public static bool IsBreak(Ruling? ruling)
+        {
+            return ruling == Ruling.Break;
+        }
+
+        public static bool IsHibernate(Ruling? ruling)
+        {
+            return ruling == Ruling.Hibernate;
         }
     }
 
@@ -250,33 +274,42 @@ namespace IdeaZoo.HeroSlice
 
             var evidence = profile != null ? Mathf.Clamp01((float)profile.Metrics.Evidence) : 0f;
             var safety = profile != null ? Mathf.Clamp01((float)profile.Metrics.Safety) : 0.5f;
+            var ruling = profile != null ? profile.FinalRuling : null;
+            var isBreak = stage == HeroCreatureStage.Transformed && HeroRulingSemantics.IsBreak(ruling);
+            var isHibernate = stage == HeroCreatureStage.Transformed && HeroRulingSemantics.IsHibernate(ruling);
+            var isHopeful = stage == HeroCreatureStage.Transformed && HeroRulingSemantics.IsHopeful(ruling);
+
             var gold = new Color(1f, 0.56f, 0.12f);
             var blue = new Color(0.18f, 0.52f, 1f);
             var burden = new Color(0.62f, 0.08f, 0.10f);
+            var muted = new Color(0.24f, 0.32f, 0.45f);
             var color = Color.Lerp(gold, blue, evidence);
-            if (stage == HeroCreatureStage.Burdened) color = burden;
-            if (stage == HeroCreatureStage.Transformed) color = Color.Lerp(gold, blue, 0.52f);
+            if (stage == HeroCreatureStage.Burdened || isBreak) color = burden;
+            else if (isHibernate) color = muted;
+            else if (isHopeful) color = Color.Lerp(gold, blue, 0.52f);
 
             foreach (var child in _layer.GetComponentsInChildren<Transform>(true))
             {
                 if (child.name.StartsWith("EvidenceHalo_", StringComparison.Ordinal))
-                    child.gameObject.SetActive(stage >= HeroCreatureStage.Observed && stage != HeroCreatureStage.Burdened);
+                    child.gameObject.SetActive(stage >= HeroCreatureStage.Observed && stage != HeroCreatureStage.Burdened && !isBreak);
                 if (child.name.StartsWith("TrustFin_", StringComparison.Ordinal))
-                    child.gameObject.SetActive(stage == HeroCreatureStage.Trusted || stage == HeroCreatureStage.Transformed);
+                    child.gameObject.SetActive(stage == HeroCreatureStage.Trusted || isHopeful);
                 if (child.name.StartsWith("BurdenShard_", StringComparison.Ordinal))
-                    child.gameObject.SetActive(stage == HeroCreatureStage.Burdened);
+                    child.gameObject.SetActive(stage == HeroCreatureStage.Burdened || isBreak);
             }
 
             var intensity = 0.8f + evidence * 2.2f;
             if (stage == HeroCreatureStage.Unproven) intensity = 0.55f;
-            if (stage == HeroCreatureStage.Transformed) intensity = 3.4f;
+            if (isHopeful) intensity = 3.4f;
+            if (isHibernate) intensity = 0.75f;
+            if (isBreak) intensity = 0.42f;
             foreach (var renderer in _stageRenderers) HeroSliceUtility.SetEmission(renderer, color, intensity);
 
             if (_coreLight != null)
             {
                 _coreLight.color = color;
                 _coreLight.intensity = Application.isMobilePlatform ? Mathf.Min(2.2f, intensity) : intensity;
-                _coreLight.range = 4.5f + evidence * 4f;
+                _coreLight.range = isBreak ? 3.2f : 4.5f + evidence * 4f;
             }
 
             if (_visual != null)
@@ -290,7 +323,7 @@ namespace IdeaZoo.HeroSlice
                 }
             }
 
-            _stageScale = StageScale(stage, safety);
+            _stageScale = StageScale(stage, safety, ruling);
             if (_visual != null) _visual.localScale = _visualBaseScale * _stageScale;
         }
 
@@ -308,8 +341,15 @@ namespace IdeaZoo.HeroSlice
                 halos[i].localRotation *= Quaternion.Euler(0f, (10f + i * 6f) * Time.deltaTime, (i % 2 == 0 ? 8f : -8f) * Time.deltaTime);
         }
 
-        private static float StageScale(HeroCreatureStage stage, float safety)
+        private static float StageScale(HeroCreatureStage stage, float safety, Ruling? ruling)
         {
+            if (stage == HeroCreatureStage.Transformed)
+            {
+                if (HeroRulingSemantics.IsBreak(ruling)) return 0.78f;
+                if (HeroRulingSemantics.IsHibernate(ruling)) return 0.90f;
+                return 1.14f;
+            }
+
             switch (stage)
             {
                 case HeroCreatureStage.Unproven: return 0.92f;
@@ -317,12 +357,12 @@ namespace IdeaZoo.HeroSlice
                 case HeroCreatureStage.Tested: return 1.04f;
                 case HeroCreatureStage.Trusted: return 1.08f;
                 case HeroCreatureStage.Burdened: return 0.98f - (1f - safety) * 0.05f;
-                case HeroCreatureStage.Transformed: return 1.14f;
                 default: return 1f;
             }
         }
     }
 
+    [DefaultExecutionOrder(990)]
     [DisallowMultipleComponent]
     public sealed class HeroStorySequenceDirector : MonoBehaviour
     {
@@ -331,6 +371,7 @@ namespace IdeaZoo.HeroSlice
         private HeroCreatureTransformationDirector _creature;
         private HeroCharacterPerformanceDirector _characters;
         private PresentationCameraRig _camera;
+        private bool _standardPresentationOwnsCaseShots;
         private string _lastRecord = string.Empty;
         private int _lastEvidence = -1;
         private CaseStage _lastStage = (CaseStage)(-1);
@@ -347,13 +388,17 @@ namespace IdeaZoo.HeroSlice
             _world = world;
             _creature = creature;
             _characters = characters;
-            _camera = FindFirstObjectByType<PresentationCameraRig>();
+            _camera = FindAnyObjectByType<PresentationCameraRig>();
+            _standardPresentationOwnsCaseShots = FindAnyObjectByType<IdeaZooPresentationDirector>() != null;
         }
 
         private void Update()
         {
             if (_game == null || _game.Director == null) return;
-            if (_camera == null) _camera = FindFirstObjectByType<PresentationCameraRig>();
+            if (_camera == null) _camera = FindAnyObjectByType<PresentationCameraRig>();
+            if (!_standardPresentationOwnsCaseShots)
+                _standardPresentationOwnsCaseShots = FindAnyObjectByType<IdeaZooPresentationDirector>() != null;
+
             var director = _game.Director;
             var profile = director.Profile;
 
@@ -362,29 +407,40 @@ namespace IdeaZoo.HeroSlice
                 _lastRecord = profile.RecordId;
                 _lastEvidence = profile.Evidence.Count;
                 _lastCreatureStage = _creature != null ? _creature.Stage : HeroCreatureStage.Unproven;
-                QueueShot(PresentationShot.Hatch, _game.Creature.transform, 1.35d);
+                if (!_standardPresentationOwnsCaseShots)
+                    QueueShot(PresentationShot.Hatch, _game.Creature.transform, 1.35d);
             }
 
             if (profile != null && profile.Evidence.Count != _lastEvidence)
             {
                 _lastEvidence = profile.Evidence.Count;
                 _characters?.SignalDiscovery();
-                QueueShot(PresentationShot.Inspection, _game.Creature.transform, 0.95d);
+                if (!_standardPresentationOwnsCaseShots)
+                    QueueShot(PresentationShot.Inspection, _game.Creature.transform, 0.95d);
             }
 
             if (_creature != null && _creature.Stage != _lastCreatureStage)
             {
                 _lastCreatureStage = _creature.Stage;
-                if (_lastCreatureStage == HeroCreatureStage.Burdened || _lastCreatureStage == HeroCreatureStage.Transformed)
+                if (_lastCreatureStage == HeroCreatureStage.Burdened)
                 {
-                    _characters?.SignalTransformation(_lastCreatureStage == HeroCreatureStage.Transformed);
-                    QueueShot(PresentationShot.Molt, _game.Creature.transform, 1.45d);
+                    _characters?.SignalTransformation(false);
+                    QueueShot(PresentationShot.Molt, _game.Creature.transform, 1.25d);
+                }
+                else if (_lastCreatureStage == HeroCreatureStage.Transformed)
+                {
+                    var hopeful = profile != null && HeroRulingSemantics.IsHopeful(profile.FinalRuling);
+                    _characters?.SignalTransformation(hopeful);
+                    if (!_standardPresentationOwnsCaseShots)
+                        QueueShot(PresentationShot.Ruling, _game.Creature.transform, 1.8d);
                 }
             }
 
             if (_lastStage != director.Stage)
             {
                 _lastStage = director.Stage;
+                if (_standardPresentationOwnsCaseShots) return;
+
                 if (director.Stage == CaseStage.Molt)
                 {
                     var district = _world != null ? _world.District(HeroDistrictId.EvidenceForge) : null;
@@ -416,6 +472,7 @@ namespace IdeaZoo.HeroSlice
         public const int MaxHeroParticles = 520;
         public const int MaxVisibleTrianglesMobile = 950000;
 
+        private IdeaZooGame _game;
         private HeroWorldProductionPass _world;
         private float _sampleStart;
         private int _sampleFrames;
@@ -427,10 +484,10 @@ namespace IdeaZoo.HeroSlice
 
         public void Bind(IdeaZooGame game, HeroWorldProductionPass world)
         {
+            _game = game;
             _world = world;
             _sampleStart = Time.unscaledTime;
             _sampleFrames = 0;
-            ApplyTarget();
         }
 
         private void Update()
@@ -443,7 +500,7 @@ namespace IdeaZoo.HeroSlice
                 _smoothedFps = Mathf.Lerp(_smoothedFps, fps, 0.35f);
                 _sampleFrames = 0;
                 _sampleStart = Time.unscaledTime;
-                AdaptiveQuality();
+                AdaptiveHeroQuality();
             }
 
             if (Time.unscaledTime >= _nextAudit)
@@ -453,45 +510,49 @@ namespace IdeaZoo.HeroSlice
             }
         }
 
-        private static void ApplyTarget()
-        {
-            QualitySettings.vSyncCount = 0;
-            Application.targetFrameRate = Application.isMobilePlatform ? 30 : 60;
-            if (Application.isMobilePlatform)
-            {
-                QualitySettings.shadowDistance = Mathf.Min(QualitySettings.shadowDistance, 28f);
-                QualitySettings.lodBias = Mathf.Min(QualitySettings.lodBias, 1.15f);
-                QualitySettings.particleRaycastBudget = Mathf.Min(QualitySettings.particleRaycastBudget, 128);
-            }
-        }
-
-        private void AdaptiveQuality()
+        private void AdaptiveHeroQuality()
         {
             if (!Application.isMobilePlatform) return;
-            if (_smoothedFps < 26f)
+            var target = Application.targetFrameRate > 0 ? Application.targetFrameRate : 30;
+            var lights = FindObjectsByType<HeroPracticalLight>(FindObjectsInactive.Exclude);
+            if (_smoothedFps < target * 0.86f)
             {
-                QualitySettings.shadowDistance = Mathf.Max(12f, QualitySettings.shadowDistance - 2f);
-                foreach (var light in FindObjectsByType<HeroPracticalLight>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
-                    light.ActivationDistance = Mathf.Max(12f, light.ActivationDistance - 1f);
+                foreach (var light in lights) light.ReduceForPressure(1f);
             }
-            else if (_smoothedFps > 29f)
+            else if (_smoothedFps > target * 0.96f)
             {
-                QualitySettings.shadowDistance = Mathf.Min(28f, QualitySettings.shadowDistance + 0.5f);
+                foreach (var light in lights) light.RecoverFromPressure(0.5f);
             }
         }
 
         public void Audit()
         {
-            var lights = FindObjectsByType<Light>(FindObjectsInactive.Exclude, FindObjectsSortMode.None).Count(item => item.enabled);
-            var particles = FindObjectsByType<ParticleSystem>(FindObjectsInactive.Exclude, FindObjectsSortMode.None)
-                .Sum(item => item.main.maxParticles);
-            var triangles = _world != null ? HeroSliceUtility.TriangleCount(_world.gameObject) : 0;
-            LastAudit = "hero-lights=" + lights + "; hero-particles=" + particles + "; world-triangles=" + triangles + "; fps=" + _smoothedFps.ToString("0.0");
+            var heroRoot = _world != null ? _world.HeroRoot : null;
+            var creatureRoot = _game != null && _game.Creature != null ? _game.Creature.transform : null;
+            var lights = CountActiveLights(heroRoot) + CountActiveLights(creatureRoot);
+            var particles = ParticleCapacity(heroRoot) + ParticleCapacity(creatureRoot);
+            var triangles = TriangleCount(heroRoot) + TriangleCount(creatureRoot);
+            LastAudit = "hero-lights=" + lights + "; hero-particles=" + particles + "; hero-triangles=" + triangles + "; fps=" + _smoothedFps.ToString("0.0");
 
             if (lights > MaxDynamicLights) Debug.LogWarning("Hero slice dynamic-light budget exceeded: " + LastAudit);
             if (particles > MaxHeroParticles) Debug.LogWarning("Hero slice particle budget exceeded: " + LastAudit);
             if (Application.isMobilePlatform && triangles > MaxVisibleTrianglesMobile)
                 Debug.LogWarning("Hero slice mobile triangle budget exceeded: " + LastAudit);
+        }
+
+        private static int CountActiveLights(Transform root)
+        {
+            return root == null ? 0 : root.GetComponentsInChildren<Light>(true).Count(item => item.enabled && item.gameObject.activeInHierarchy);
+        }
+
+        private static int ParticleCapacity(Transform root)
+        {
+            return root == null ? 0 : root.GetComponentsInChildren<ParticleSystem>(true).Sum(item => item.main.maxParticles);
+        }
+
+        private static int TriangleCount(Transform root)
+        {
+            return root == null ? 0 : HeroSliceUtility.TriangleCount(root.gameObject);
         }
     }
 }

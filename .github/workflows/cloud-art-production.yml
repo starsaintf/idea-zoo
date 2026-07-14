@@ -48,10 +48,10 @@ jobs:
           blender --background --python-expr "import numpy; print('Blender NumPy', numpy.__version__)"
           blender --version
 
-      - name: Generate full rigged cast and creature families
+      - name: Generate refined rigged cast and creature families
         run: |
           mkdir -p unity/ArtProduction
-          blender --background --python cloud_art/generate_idea_zoo_assets.py -- \
+          blender --background --python cloud_art/generate_idea_zoo_assets_v2.py -- \
             --output unity/Assets/IdeaZoo/Art/CloudGenerated/Models \
             --source-output unity/ArtProduction/Source \
             --preview-output unity/ArtProduction/Previews \
@@ -97,7 +97,7 @@ jobs:
             echo "Cloud art output is already current."
             exit 0
           fi
-          git commit -m "art(cloud): generate complete rigged cast and creature package"
+          git commit -m "art(cloud): generate refined rigged cast and creature package"
           git push origin HEAD:cloud-art-production-v1
 
       - name: Upload complete design and model package
@@ -124,7 +124,7 @@ jobs:
           data = json.loads(Path('unity/ArtProduction/generated_manifest.json').read_text())
           contact = Path('unity/ArtProduction/Previews/IdeaZoo_CloudArt_ContactSheet.png').exists()
           with open(Path(os.environ['GITHUB_STEP_SUMMARY']), 'a', encoding='utf-8') as out:
-              out.write('# Idea Zoo cloud art production\n\n')
+              out.write('# Idea Zoo refined cloud art production\n\n')
               out.write(f"Generated and validated **{data['asset_count']}** rigged assets.\n\n")
               out.write(f"- Characters: {len(data['characters'])}\n")
               out.write(f"- Creature families: {len(data['creatures'])}\n")

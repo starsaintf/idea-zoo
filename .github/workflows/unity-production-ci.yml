@@ -1,0 +1,100 @@
+name: Unity production validation
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "unity/**"
+      - ".github/workflows/unity-production-ci.yml"
+  workflow_dispatch:
+
+jobs:
+  domain-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+      - name: Compile and run engine-independent contracts
+        run: dotnet run --project unity/Tests/IdeaZoo.Domain.Contract/IdeaZoo.Domain.Contract.csproj --configuration Release
+
+  unity-structure:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate Unity project structure and source contracts
+        run: |
+          python - <<'PY'
+          import json
+          import pathlib
+          import re
+          import sys
+
+          root = pathlib.Path('unity')
+          required = [
+              root / 'ProjectSettings/ProjectVersion.txt',
+              root / 'ProjectSettings/EditorBuildSettings.asset',
+              root / 'Packages/manifest.json',
+              root / 'Assets/IdeaZoo/Core/IdeaZooDomain.cs',
+              root / 'Assets/IdeaZoo/Runtime/IdeaZooWorld.cs',
+              root / 'Assets/IdeaZoo/Runtime/IdeaZooActors.cs',
+              root / 'Assets/IdeaZoo/Runtime/IdeaZooHud.cs',
+              root / 'Assets/IdeaZoo/Runtime/IdeaZooGame.cs',
+              root / 'Assets/IdeaZoo/Runtime/SpecimenArchive.cs',
+              root / 'Assets/IdeaZoo/Scenes/WhisperGate.unity',
+              root / 'Tests/IdeaZoo.Domain.Contract/Program.cs',
+          ]
+          missing = [str(path) for path in required if not path.exists()]
+          if missing:
+              raise SystemExit('Missing required files: ' + ', '.join(missing))
+
+          manifest = json.loads((root / 'Packages/manifest.json').read_text())
+          packages = manifest['dependencies']
+          for name in ['com.unity.cinemachine', 'com.unity.inputsystem', 'com.unity.render-pipelines.universal', 'com.unity.timeline', 'com.unity.addressables']:
+              if name not in packages:
+                  raise SystemExit(f'Missing production package: {name}')
+
+          version = (root / 'ProjectSettings/ProjectVersion.txt').read_text()
+          if '6000.5.0f1' not in version:
+              raise SystemExit('Unity version is not pinned to 6000.5.0f1')
+
+          core = (root / 'Assets/IdeaZoo/Core/IdeaZooDomain.cs').read_text()
+          if 'UnityEngine' in core:
+              raise SystemExit('Engine-independent core imports UnityEngine')
+          for token in ['IdeaClass', 'Appetite', 'CaseStage', 'IdeaZooCaseDirector', 'ApplyMolt', 'ApplyRuling']:
+              if token not in core:
+                  raise SystemExit(f'Core contract missing {token}')
+
+          sources = '\n'.join(path.read_text() for path in (root / 'Assets/IdeaZoo').rglob('*.cs'))
+          forbidden = ['PrimitiveType.Torus', 'TODO', 'FIXME', 'gameObject.AddComponent<RectTransform>()']
+          for token in forbidden:
+              if token in sources:
+                  raise SystemExit(f'Forbidden or unfinished source token: {token}')
+
+          for token in ['DESIRE YARD', 'COMMITMENT PADDOCK', 'BURROWER TUNNEL', 'REFUSAL GATE', 'THE MOLT HOUSE', 'SEALED BOARD WING', 'THE DECISION GARDEN']:
+              if token not in sources:
+                  raise SystemExit(f'World department missing: {token}')
+
+          for token in ['RuntimeInitializeOnLoadMethod', 'two', 'ArmOrIssueDecision', 'SpecimenArchive', 'SafeAreaFitter', 'MobileJoystick']:
+              if token not in sources:
+                  raise SystemExit(f'Runtime foundation missing: {token}')
+
+          for path in (root / 'Assets/IdeaZoo').rglob('*.cs'):
+              text = path.read_text()
+              stripped = re.sub(r'//.*?$|/\*.*?\*/|"(?:\\.|[^"\\])*"', '', text, flags=re.M | re.S)
+              if stripped.count('{') != stripped.count('}'):
+                  raise SystemExit(f'Unbalanced braces in {path}')
+
+          build_settings = (root / 'ProjectSettings/EditorBuildSettings.asset').read_text()
+          if 'Assets/IdeaZoo/Scenes/WhisperGate.unity' not in build_settings:
+              raise SystemExit('Whisper Gate is not in build settings')
+          print('UNITY_STRUCTURE_CONTRACT_PASS')
+          PY
+
+      - name: Package reviewable Unity source
+        run: zip -qr idea-zoo-unity-production-source.zip unity .github/workflows/unity-production-ci.yml
+      - uses: actions/upload-artifact@v4
+        with:
+          name: idea-zoo-unity-production-source
+          path: idea-zoo-unity-production-source.zip

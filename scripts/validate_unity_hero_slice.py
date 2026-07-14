@@ -36,13 +36,23 @@ checks = {
     )),
     "story state drives creature art": "Evaluate(IdeaProfile profile, CaseStage caseStage)" in texts[performance.name],
     "outcome-sensitive final art": all(token in texts[performance.name] for token in (
-        "IsHopeful", "IsBreak", "IsHibernate"
+        "IsHopeful", "IsBreak", "IsHibernate", "SignalTransformation(Ruling? ruling)"
     )),
+    "hibernate differs from destructive ruling": "hibernate ? CharacterEmotion.Concerned" in texts[performance.name]
+        and "hibernate ? CharacterGesture.Inspect" in texts[performance.name],
     "cinematic ownership is deduplicated": "standardPresentationOwnsCaseShots" in texts[performance.name],
+    "unique cinematic waits for shared camera": all(token in texts[performance.name] for token in (
+        "ScheduleUniqueShot", "TryPlayPendingUniqueShot", "_camera.ShotActive"
+    )),
     "mobile tiers remain authoritative": "Application.targetFrameRate =" not in texts[performance.name],
     "hero-only adaptive budget": "AdaptiveHeroQuality" in texts[performance.name] and "HeroPracticalLight" in texts[performance.name],
     "surface materials are shared": "MaterialFor(color, metallic, smoothness)" in texts[core.name]
         and "EqualHeroSurfacesShareMaterialInstances" in texts[edit_tests.name],
+    "transparent surfaces are configured": all(token in texts[core.name] for token in (
+        "_SURFACE_TYPE_TRANSPARENT", "RenderQueue.Transparent", "BlendMode.SrcAlpha", "BlendMode.OneMinusSrcAlpha"
+    )) and "TransparentHeroSurfacesUseTransparentRendering" in texts[edit_tests.name],
+    "imported creature emission is enabled": "SetEmissionOnly" in texts[core.name]
+        and "HeroSliceUtility.SetEmissionOnly(renderer" in texts[performance.name],
     "all mesh submeshes are counted": "for (var subMesh = 0; subMesh < mesh.subMeshCount; subMesh++)" in texts[core.name],
     "four review scenes": "BakeReviewScenes" in texts[editor.name] and "HeroDistrictId" in texts[editor.name],
     "serialization-safe anchors": "CinematicHeroSlicePrefabAnchor" in texts[editor.name]

@@ -1,0 +1,38 @@
+name: Unity manual license request
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [unity-production-v1]
+    paths:
+      - ".github/workflows/unity-license-request.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  request-license-file:
+    name: Generate browser-activation request
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generate Unity manual activation request
+        id: activation
+        uses: game-ci/unity-request-activation@v2
+        with:
+          unityVersion: 6000.5.0f1
+      - name: Upload activation request
+        uses: actions/upload-artifact@v4
+        with:
+          name: idea-zoo-unity-manual-activation-request
+          path: ${{ steps.activation.outputs.filePath }}
+          if-no-files-found: error
+      - name: Explain browser-only completion
+        run: |
+          cat >> "$GITHUB_STEP_SUMMARY" <<'EOF'
+          ## Unity activation request generated
+
+          Download the `idea-zoo-unity-manual-activation-request` artifact, upload the `.alf` file through Unity's manual license activation page, then save the returned `.ulf` contents in this repository as the `UNITY_LICENSE` Actions secret. Add `UNITY_EMAIL` and `UNITY_PASSWORD` as Actions secrets as well.
+
+          No local Unity Editor is required for this activation-request step.
+          EOF

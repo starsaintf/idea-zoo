@@ -11,3 +11,5 @@ This directory is the authoritative character and creature design handoff.
 - `generated_manifest.json` — produced by the cloud build with actual files and geometry counts.
 - `Source/` — editable Blender and portable GLB deliverables generated in CI.
 - `Previews/` — individual review renders and the complete contact sheet generated in CI.
+
+Validation is executed entirely in the cloud: Blender generation first, then licensed Unity import, prefab baking, EditMode, PlayMode and WebGL review.

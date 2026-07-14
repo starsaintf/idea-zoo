@@ -241,6 +241,29 @@ namespace IdeaZoo.Presentation
             return Finish("Civic_Ribbon", vertices, triangles, uvs);
         }
 
+        // Compatibility overloads used by the production creature kit.
+        public static Mesh Ribbon(float length, float width, int segments, float phase)
+        {
+            var mesh = Ribbon(length, width, 0.12f, segments);
+            mesh.name = "Civic_Ribbon_Phase_" + phase.ToString("0.00");
+            return mesh;
+        }
+
+        public static Mesh ArchRing(float radius, float tubeRadius, int segments, float arcDegrees)
+        {
+            return TubeArc(radius, tubeRadius, arcDegrees, segments, 8);
+        }
+
+        public static GameObject Create(string objectName, Mesh mesh, Material material, Transform parent)
+        {
+            if (mesh == null) throw new ArgumentNullException("mesh");
+            var node = new GameObject(objectName, typeof(MeshFilter), typeof(MeshRenderer));
+            node.transform.SetParent(parent, false);
+            node.GetComponent<MeshFilter>().sharedMesh = mesh;
+            node.GetComponent<MeshRenderer>().sharedMaterial = material;
+            return node;
+        }
+
         private static void AddBox(List<Vector3> vertices, List<int> triangles, List<Vector2> uvs, Vector3 center, Vector3 size)
         {
             var start = vertices.Count;

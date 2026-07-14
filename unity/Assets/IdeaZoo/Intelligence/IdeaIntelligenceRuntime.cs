@@ -60,6 +60,9 @@ namespace IdeaZoo.Intelligence
             var allowed = new[] { ".txt", ".md", ".json", ".csv", ".pdf", ".png", ".jpg", ".jpeg", ".webp", ".wav", ".m4a" };
             if (!allowed.Contains(extension)) throw new InvalidOperationException("This evidence file type is not accepted by the private vault.");
             var bytes = File.ReadAllBytes(sourcePath);
+            string contentHash;
+            using (var sha = System.Security.Cryptography.SHA256.Create())
+                contentHash = BitConverter.ToString(sha.ComputeHash(bytes)).Replace("-", string.Empty).ToLowerInvariant();
             var id = "artifact-" + Guid.NewGuid().ToString("N");
             var destination = Path.Combine(_root, id + extension);
             File.WriteAllBytes(destination, bytes);
@@ -70,7 +73,7 @@ namespace IdeaZoo.Intelligence
                 Title = string.IsNullOrWhiteSpace(title) ? Path.GetFileNameWithoutExtension(info.Name) : title.Trim(),
                 Summary = summary == null ? string.Empty : summary.Trim(),
                 Source = destination,
-                ContentHash = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(bytes)).ToLowerInvariant(),
+                ContentHash = contentHash,
                 IndependentlyVerified = verified,
                 RecordedAtUtc = DateTime.UtcNow
             };

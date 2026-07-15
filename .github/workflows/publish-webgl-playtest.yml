@@ -1,0 +1,116 @@
+name: Publish Idea Zoo browser playtest
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/publish-webgl-playtest.yml"
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: "webgl-playtest"
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download verified WebGL build
+        uses: actions/download-artifact@v4
+        with:
+          name: idea-zoo-unity-webgl
+          path: site
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: 29356981776
+
+      - name: Prepare Unity build for static hosting
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT="site/IdeaZooWebGL"
+          test -f "$ROOT/index.html"
+          gzip -dk "$ROOT/Build/IdeaZooWebGL.data.gz"
+          gzip -dk "$ROOT/Build/IdeaZooWebGL.framework.js.gz"
+          gzip -dk "$ROOT/Build/IdeaZooWebGL.wasm.gz"
+          rm "$ROOT/Build/IdeaZooWebGL.data.gz" \
+             "$ROOT/Build/IdeaZooWebGL.framework.js.gz" \
+             "$ROOT/Build/IdeaZooWebGL.wasm.gz"
+          sed -i \
+            -e 's/Unity Web Player | unity/The Idea Zoo — Browser Playtest/' \
+            -e 's/IdeaZooWebGL.data.gz/IdeaZooWebGL.data/' \
+            -e 's/IdeaZooWebGL.framework.js.gz/IdeaZooWebGL.framework.js/' \
+            -e 's/IdeaZooWebGL.wasm.gz/IdeaZooWebGL.wasm/' \
+            -e 's/companyName: "DefaultCompany"/companyName: "Idea Zoo"/' \
+            -e 's/productName: "unity"/productName: "The Idea Zoo"/' \
+            -e 's/<div id="unity-build-title">unity<\/div>/<div id="unity-build-title">The Idea Zoo<\/div>/' \
+            "$ROOT/index.html"
+          touch "$ROOT/.nojekyll"
+
+      - name: Publish verified build branch
+        id: publish
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          cd site/IdeaZooWebGL
+          git init
+          git checkout -b gh-pages
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add --all
+          git commit -m "Publish verified Idea Zoo WebGL playtest"
+          git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git push --force origin gh-pages
+          echo "published_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Record public playtest receipt
+        if: always()
+        uses: actions/github-script@v7
+        env:
+          PUBLISH_OUTCOME: ${{ steps.publish.outcome }}
+          PUBLISHED_SHA: ${{ steps.publish.outputs.published_sha }}
+          SOURCE_RUN_ID: "29356981776"
+          SOURCE_HEAD_SHA: "494b46a0942e09b3e20e4de264e35ef032334985"
+        with:
+          script: |
+            const path = 'deployment-status/webgl-playtest.json';
+            const sha = process.env.PUBLISHED_SHA || '';
+            const published = process.env.PUBLISH_OUTCOME === 'success' && Boolean(sha);
+            const receipt = {
+              published,
+              outcome: process.env.PUBLISH_OUTCOME || 'not-run',
+              branch: 'gh-pages',
+              publishedSha: sha,
+              playUrl: published ? 'https://raw.githack.com/starsaintf/idea-zoo/gh-pages/index.html' : '',
+              immutablePlayUrl: published ? `https://rawcdn.githack.com/starsaintf/idea-zoo/${sha}/index.html` : '',
+              sourceRunId: process.env.SOURCE_RUN_ID,
+              sourceHeadSha: process.env.SOURCE_HEAD_SHA,
+              workflowRunId: String(context.runId),
+              recordedAt: new Date().toISOString()
+            };
+            let currentSha;
+            try {
+              const current = await github.rest.repos.getContent({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                path,
+                ref: 'main'
+              });
+              currentSha = current.data.sha;
+            } catch (error) {
+              if (error.status !== 404) throw error;
+            }
+            await github.rest.repos.createOrUpdateFileContents({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              path,
+              message: `ci: record browser playtest publication ${context.runId}`,
+              content: Buffer.from(JSON.stringify(receipt, null, 2) + '\n').toString('base64'),
+              branch: 'main',
+              sha: currentSha
+            });

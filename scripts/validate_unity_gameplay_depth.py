@@ -50,7 +50,9 @@ checks = {
     "adaptive sustained frame protection": all(token in performance_text for token in (
         "_badSamples >= 3", "_goodSamples >= 8", "ReduceNonessentialLoad", "RestoreQuality"
     )),
-    "mobile target retained": "MobileTargetFps = 30" in performance_text,
+    "selected quality target respected": "CurrentTarget()" in performance_text and "Application.targetFrameRate =" not in performance_text,
+    "mobile governor ownership respected": "QualitySettings.shadowDistance" not in performance_text and "if (!Application.isMobilePlatform)" in performance_text,
+    "mobile target fallback retained": "MobileTargetFps = 30" in performance_text,
     "editor coverage": "EveryEvidenceHabitatIsPlayableAndBounded" in texts[edit_tests.name],
     "playmode ownership coverage": "GameplayDepthBootsOnceAndReusesTheExistingWorld" in texts[play_tests.name],
 }

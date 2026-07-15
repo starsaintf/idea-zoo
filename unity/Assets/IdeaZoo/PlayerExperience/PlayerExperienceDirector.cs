@@ -28,7 +28,6 @@ namespace IdeaZoo.PlayerExperience
         private int _lastCompletedTests = -1;
         private CaseStage _lastStage;
         private bool _bound;
-        private bool _onboardingShown;
 
         public static PlayerExperienceDirector Current { get { return _current; } }
         public bool Bound { get { return _bound; } }
@@ -89,10 +88,7 @@ namespace IdeaZoo.PlayerExperience
             _bound = true;
 
             if (_game.Director.Profile == null && !_service.State.OnboardingDismissed)
-            {
-                _onboardingShown = true;
                 _hud.ShowOnboarding(_service.State.TutorialCompleted);
-            }
         }
 
         private void Update()
@@ -173,6 +169,7 @@ namespace IdeaZoo.PlayerExperience
             if (string.IsNullOrEmpty(profile.RecordId) || string.Equals(profile.RecordId, _completedRecordId, StringComparison.Ordinal)) return;
             _completedRecordId = profile.RecordId;
             var record = _service.CompleteCase(profile);
+            if (record != null && record.Tutorial) _service.DismissOnboarding();
             _worldPass.Refresh(_service.State);
             React(profile.FinalRuling == Ruling.Break ? CharacterEmotion.Grieving : CharacterEmotion.Hopeful,
                 profile.FinalRuling == Ruling.Break ? CharacterGesture.Mourn : CharacterGesture.Celebrate);
@@ -195,7 +192,6 @@ namespace IdeaZoo.PlayerExperience
             }
             try
             {
-                _onboardingShown = false;
                 _beginCase.Invoke(_game, new object[] { PlayerExperienceTutorial.Intake() });
             }
             catch (TargetInvocationException exception)
@@ -208,7 +204,6 @@ namespace IdeaZoo.PlayerExperience
         private void ContinueWithoutTutorial()
         {
             _service.DismissOnboarding();
-            _onboardingShown = false;
             if (_game != null && _game.Hud != null) _game.Hud.ShowIntake();
         }
 

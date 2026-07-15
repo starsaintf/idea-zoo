@@ -39,6 +39,7 @@ namespace IdeaZoo.Tests.EditMode
                 var run = new GameplayEncounterRun(definition);
                 while (!run.Complete)
                 {
+                    GameplayResourceSafety.EnsurePlayable(run.CurrentRound.Choices, resources);
                     var available = run.CurrentRound.Choices
                         .Select((choice, index) => new { choice, index })
                         .Where(item => resources.CanApply(item.choice.Impact))
@@ -81,6 +82,26 @@ namespace IdeaZoo.Tests.EditMode
             Assert.AreEqual(0, resources.Trust);
             Assert.AreEqual(0, resources.Momentum);
             Assert.AreEqual(30, resources.Evidence);
+        }
+
+        [Test]
+        public void ReserveProtocolPreventsAResourceSoftLockWithoutGrantingExcessCapacity()
+        {
+            var resources = new GameplayResourceState { Time = 0, Trust = 0, Momentum = 0, Evidence = 12 };
+            var choices = new[]
+            {
+                new GameplayChoice("expensive", "Expensive", "", new GameplayImpact { Time = -4, Trust = -2, Momentum = -2 }),
+                new GameplayChoice("smallest", "Smallest", "", new GameplayImpact { Time = -1, Trust = 0, Momentum = -1 }),
+                new GameplayChoice("middle", "Middle", "", new GameplayImpact { Time = -2, Trust = -1, Momentum = -1 })
+            };
+
+            Assert.IsTrue(GameplayResourceSafety.EnsurePlayable(choices, resources));
+            Assert.IsTrue(choices.Any(choice => resources.CanApply(choice.Impact)));
+            Assert.AreEqual(1, resources.Time);
+            Assert.AreEqual(0, resources.Trust);
+            Assert.AreEqual(1, resources.Momentum);
+            Assert.AreEqual(12, resources.Evidence);
+            Assert.IsFalse(resources.CanApply(choices[0].Impact));
         }
 
         [Test]

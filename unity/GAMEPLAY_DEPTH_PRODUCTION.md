@@ -30,7 +30,7 @@ Each case begins with:
 
 Strong tests usually cost more time or momentum. Fast moves can damage trust or conceal risk. The resources remain visible during exploration and every encounter.
 
-No loading scene is introduced. Each habitat is limited to three decisions and each decision advances immediately.
+No loading scene is introduced. Each habitat is limited to three decisions and each decision advances immediately. Returning to the Zoo before an encounter is completed rolls its unfinished resource transaction back cleanly.
 
 Scarcity cannot soft-lock a case. When no remaining choice is affordable, the **Reserve Protocol** releases only the minimum capacity needed for the least expensive response. It does not refill the player or make more costly choices available.
 
@@ -93,7 +93,7 @@ Gameplay logic, evidence, input and ruling systems are never disabled to recover
 The pass adds:
 
 - deterministic encounter tests;
-- resource-boundary, affordability and reserve-protocol tests;
+- resource-boundary, affordability, reserve-protocol and transaction-rollback contracts;
 - disruption repeatability tests;
 - persistence-cap tests;
 - runtime ownership and world-reuse PlayMode coverage;

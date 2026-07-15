@@ -77,11 +77,13 @@ The implementation keeps speed and visual quality through:
 - state-change-only persistence;
 - no new simulation loop for creatures or districts;
 - no per-frame hierarchy scans or UI rebuilding;
-- 30 FPS mobile and 60 FPS desktop/WebGL targets;
+- active Eco 30, Balanced 45 or Quality 60 target detection rather than overriding the selected tier;
 - one-second frame sampling;
 - quality reduction only after three sustained bad samples;
 - quality restoration only after eight sustained healthy samples;
-- adaptive reduction limited to shadow distance, LOD bias and nonessential particle budgets.
+- adaptive reduction limited to nonessential particle capacity and desktop/WebGL LOD;
+- explicit deference to the existing mobile-quality controller for render scale, tier, shadows and mobile LOD;
+- explicit deference to the hero-slice governor for practical-light pressure.
 
 Gameplay logic, evidence, input and ruling systems are never disabled to recover performance.
 
@@ -94,7 +96,7 @@ The pass adds:
 - disruption repeatability tests;
 - persistence-cap tests;
 - runtime ownership and world-reuse PlayMode coverage;
-- a static allocation and performance contract;
+- a static allocation, governor-ownership and performance contract;
 - the existing licensed Unity EditMode, PlayMode and WebGL build pipeline.
 
 Physical iPhone testing remains necessary for sustained heat, battery use, touch comfort and device-specific frame pacing.

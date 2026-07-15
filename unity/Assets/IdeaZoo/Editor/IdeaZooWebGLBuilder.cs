@@ -87,15 +87,11 @@ namespace IdeaZoo.EditorTools
             if (report.steps == null) return;
             foreach (var step in report.steps)
             {
-                if (step == null) continue;
                 log.AppendLine();
                 log.AppendLine("STEP: " + step.name + " · " + step.duration);
                 if (step.messages == null) continue;
                 foreach (var message in step.messages)
-                {
-                    if (message == null) continue;
                     log.AppendLine("[" + message.type + "] " + message.content);
-                }
             }
         }
 

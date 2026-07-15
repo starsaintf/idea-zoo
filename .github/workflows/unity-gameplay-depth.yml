@@ -1,0 +1,20 @@
+name: Unity gameplay depth contract
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "unity/Assets/IdeaZoo/Gameplay/**"
+      - "unity/Assets/IdeaZoo/Tests/EditMode/GameplayDepthEditorTests.cs"
+      - "unity/Assets/IdeaZoo/Tests/PlayMode/GameplayDepthPlayModeTests.cs"
+      - "unity/GAMEPLAY_DEPTH_PRODUCTION.md"
+      - "scripts/validate_unity_gameplay_depth.py"
+      - ".github/workflows/unity-gameplay-depth.yml"
+
+jobs:
+  source-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate gameplay depth, pacing and performance boundaries
+        run: python scripts/validate_unity_gameplay_depth.py

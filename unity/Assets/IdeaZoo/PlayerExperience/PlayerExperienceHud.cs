@@ -24,7 +24,6 @@ namespace IdeaZoo.PlayerExperience
         private static readonly Color Paper = new Color(.94f, .90f, .80f, 1f);
         private static readonly Color Brass = new Color(.92f, .65f, .27f, 1f);
         private static readonly Color Teal = new Color(.25f, .78f, .71f, 1f);
-        private static readonly Color Rust = new Color(.80f, .29f, .22f, 1f);
         private static readonly Color Muted = new Color(.18f, .23f, .25f, 1f);
 
         public bool OverlayOpen { get { return _overlay != null && _overlay.activeSelf; } }
@@ -203,31 +202,69 @@ namespace IdeaZoo.PlayerExperience
 
         private GameObject ContentPanel()
         {
-            var panel = Panel("PlayerExperienceContent", _overlay.transform, Ink);
-            var rect = panel.GetComponent<RectTransform>();
-            rect.anchorMin = new Vector2(.08f, .06f);
-            rect.anchorMax = new Vector2(.92f, .94f);
-            rect.offsetMin = Vector2.zero;
-            rect.offsetMax = Vector2.zero;
-            var layout = panel.AddComponent<VerticalLayoutGroup>();
+            var frame = Panel("PlayerExperienceScrollFrame", _overlay.transform, Ink);
+            var frameRect = frame.GetComponent<RectTransform>();
+            frameRect.anchorMin = new Vector2(.08f, .06f);
+            frameRect.anchorMax = new Vector2(.92f, .94f);
+            frameRect.offsetMin = Vector2.zero;
+            frameRect.offsetMax = Vector2.zero;
+
+            var viewport = new GameObject("PlayerExperienceViewport", typeof(RectTransform), typeof(Image), typeof(Mask));
+            viewport.transform.SetParent(frame.transform, false);
+            var viewportRect = viewport.GetComponent<RectTransform>();
+            Stretch(viewportRect, 8f);
+            viewport.GetComponent<Image>().color = Color.white;
+            viewport.GetComponent<Mask>().showMaskGraphic = false;
+
+            var content = new GameObject("PlayerExperienceContent", typeof(RectTransform), typeof(VerticalLayoutGroup), typeof(ContentSizeFitter));
+            content.transform.SetParent(viewport.transform, false);
+            var contentRect = content.GetComponent<RectTransform>();
+            contentRect.anchorMin = new Vector2(0f, 1f);
+            contentRect.anchorMax = new Vector2(1f, 1f);
+            contentRect.pivot = new Vector2(.5f, 1f);
+            contentRect.anchoredPosition = Vector2.zero;
+            contentRect.sizeDelta = Vector2.zero;
+
+            var layout = content.GetComponent<VerticalLayoutGroup>();
             layout.padding = new RectOffset(28, 28, 22, 22);
             layout.spacing = 10f;
             layout.childForceExpandWidth = true;
             layout.childForceExpandHeight = false;
-            panel.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.Unconstrained;
-            return panel;
+            layout.childControlWidth = true;
+            layout.childControlHeight = true;
+
+            var fitter = content.GetComponent<ContentSizeFitter>();
+            fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+            fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+            var scroll = frame.AddComponent<ScrollRect>();
+            scroll.viewport = viewportRect;
+            scroll.content = contentRect;
+            scroll.horizontal = false;
+            scroll.vertical = true;
+            scroll.movementType = ScrollRect.MovementType.Clamped;
+            scroll.inertia = true;
+            scroll.decelerationRate = .12f;
+            scroll.scrollSensitivity = 32f;
+            return content;
         }
 
         private void AddTitle(GameObject panel, string value)
         {
             var text = Label("Title", panel.transform, value, 25, Brass, TextAnchor.MiddleLeft);
-            text.gameObject.AddComponent<LayoutElement>().preferredHeight = 48f;
+            text.horizontalOverflow = HorizontalWrapMode.Wrap;
+            text.verticalOverflow = VerticalWrapMode.Overflow;
+            text.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            text.gameObject.AddComponent<LayoutElement>().minHeight = 48f;
         }
 
         private void AddSection(GameObject panel, string value)
         {
             var text = Label("Section", panel.transform, value, 16, Teal, TextAnchor.MiddleLeft);
-            text.gameObject.AddComponent<LayoutElement>().preferredHeight = 30f;
+            text.horizontalOverflow = HorizontalWrapMode.Wrap;
+            text.verticalOverflow = VerticalWrapMode.Overflow;
+            text.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            text.gameObject.AddComponent<LayoutElement>().minHeight = 30f;
         }
 
         private void AddBody(GameObject panel, string value, Color? color = null)
@@ -235,7 +272,8 @@ namespace IdeaZoo.PlayerExperience
             var text = Label("Body", panel.transform, value, 14, color ?? Paper, TextAnchor.UpperLeft);
             text.horizontalOverflow = HorizontalWrapMode.Wrap;
             text.verticalOverflow = VerticalWrapMode.Overflow;
-            text.gameObject.AddComponent<LayoutElement>().preferredHeight = Mathf.Clamp(34f + value.Length * .18f, 42f, 96f);
+            text.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+            text.gameObject.AddComponent<LayoutElement>().minHeight = 42f;
         }
 
         private void AddButton(GameObject panel, string label, Color color, UnityEngine.Events.UnityAction action)
@@ -272,6 +310,8 @@ namespace IdeaZoo.PlayerExperience
             button.colors = colors;
             var text = Label("Label", value.transform, string.Empty, 14, new Color(.02f, .04f, .05f), TextAnchor.MiddleCenter);
             Stretch(text.rectTransform, 8f);
+            text.horizontalOverflow = HorizontalWrapMode.Wrap;
+            text.verticalOverflow = VerticalWrapMode.Truncate;
             return button;
         }
 
@@ -299,7 +339,12 @@ namespace IdeaZoo.PlayerExperience
 
         private void ClearOverlay()
         {
-            for (var i = _overlay.transform.childCount - 1; i >= 0; i--) Destroy(_overlay.transform.GetChild(i).gameObject);
+            for (var i = _overlay.transform.childCount - 1; i >= 0; i--)
+            {
+                var child = _overlay.transform.GetChild(i).gameObject;
+                child.SetActive(false);
+                Destroy(child);
+            }
         }
 
         private void OpenOverlay()

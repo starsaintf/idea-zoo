@@ -67,8 +67,8 @@ namespace IdeaZoo.Gameplay
             var previous = string.IsNullOrEmpty(run.LastConsequence) ? reflection : "LAST CONSEQUENCE: " + run.LastConsequence;
             _context.text = run.Definition.Mission + "\n\n" + run.CurrentRound.Context + "\n\n" + previous;
             _feedback.text = string.Empty;
-            _resourceText.text = resources.Compact();
             RenderChoices(run.CurrentRound.Choices, resources);
+            _resourceText.text = resources.Compact();
             _cancelButton.gameObject.SetActive(true);
         }
 
@@ -80,8 +80,8 @@ namespace IdeaZoo.Gameplay
             _body.text = disruption.Situation;
             _context.text = "The plan changed. Choose what the creature sacrifices.";
             _feedback.text = string.Empty;
-            _resourceText.text = resources.Compact();
             RenderChoices(disruption.Choices, resources);
+            _resourceText.text = resources.Compact();
             _cancelButton.gameObject.SetActive(false);
         }
 
@@ -165,6 +165,13 @@ namespace IdeaZoo.Gameplay
 
         private void RenderChoices(GameplayChoice[] choices, GameplayResourceState resources)
         {
+            var reserveUsed = GameplayResourceSafety.EnsurePlayable(choices, resources);
+            if (reserveUsed)
+            {
+                _feedback.text = "RESERVE PROTOCOL · The Zoo releases only enough capacity for the least expensive remaining response.";
+                _feedback.color = Brass;
+            }
+
             for (var i = 0; i < _choiceButtons.Count; i++)
             {
                 var active = choices != null && i < choices.Length;

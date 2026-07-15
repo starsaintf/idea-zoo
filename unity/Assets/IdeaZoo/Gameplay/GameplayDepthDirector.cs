@@ -18,6 +18,7 @@ namespace IdeaZoo.Gameplay
         private GameplayMemoryWorldPass _memoryWorld;
         private GameplayPerformanceGovernor _performance;
         private GameplayResourceState _resources;
+        private GameplayResourceState _encounterResourceCheckpoint;
         private GameplayEncounterRun _encounter;
         private GameplayDisruptionDefinition _disruption;
         private readonly HashSet<int> _triggeredAtTestCount = new HashSet<int>();
@@ -97,6 +98,7 @@ namespace IdeaZoo.Gameplay
             _activeRecordId = recordId;
             _completedRecordId = string.Empty;
             _resources = GameplayResourceState.Fresh();
+            _encounterResourceCheckpoint = null;
             _encounter = null;
             _disruption = null;
             _disruptionOrdinal = 0;
@@ -123,6 +125,7 @@ namespace IdeaZoo.Gameplay
             _game.Hud.CloseOverlay();
             _game.Keeper.SetLocked(true);
             _game.Keeper.ResetTransientInput();
+            _encounterResourceCheckpoint = _resources.Clone();
             _encounter = new GameplayEncounterRun(definition);
             _hud.ShowEncounter(_encounter, _resources, _memory.OpeningReflection());
         }
@@ -199,6 +202,7 @@ namespace IdeaZoo.Gameplay
             var strength = _encounter.Strength();
             var note = _encounter.EvidenceNote();
             _encounter = null;
+            _encounterResourceCheckpoint = null;
             _hud.HideOverlay();
 
             try
@@ -236,9 +240,14 @@ namespace IdeaZoo.Gameplay
 
         private void OnCancelRequested()
         {
+            if (_encounter != null && _encounterResourceCheckpoint != null)
+                _resources = _encounterResourceCheckpoint.Clone();
+
+            _encounterResourceCheckpoint = null;
             _encounter = null;
             _disruption = null;
             _hud.HideOverlay();
+            _hud.SetStatus(_resources, _memory.Summary(), _performance.StatusLabel);
             if (_game == null || _game.Keeper == null) return;
             _game.Keeper.SetLocked(false);
             _game.Keeper.ResetTransientInput();

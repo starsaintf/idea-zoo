@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using IdeaZoo.Core;
 using IdeaZoo.Runtime;
@@ -50,7 +51,7 @@ namespace IdeaZoo.Gameplay
 
             for (var frame = 0; frame < 600; frame++)
             {
-                _game = FindFirstObjectByType<IdeaZooGame>();
+                _game = FindAnyObjectByType<IdeaZooGame>();
                 if (_game != null && _game.World != null && _game.Hud != null)
                 {
                     Bind();
@@ -277,7 +278,7 @@ namespace IdeaZoo.Gameplay
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Install()
         {
-            if (UnityEngine.Object.FindFirstObjectByType<GameplayDepthDirector>() != null) return;
+            if (UnityEngine.Object.FindAnyObjectByType<GameplayDepthDirector>() != null) return;
             var root = new GameObject("IdeaZoo_GameplayDepth");
             UnityEngine.Object.DontDestroyOnLoad(root);
             root.AddComponent<GameplayDepthDirector>();

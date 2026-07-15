@@ -11,6 +11,8 @@ namespace IdeaZoo.Tests.PlayMode
 {
     public sealed class GameplayDepthPlayModeTests
     {
+        private const string CleanupSceneName = "GameplayDepthCleanup";
+
         [UnityTest]
         public IEnumerator GameplayDepthBootsOnceAndReusesTheExistingWorld()
         {
@@ -64,6 +66,7 @@ namespace IdeaZoo.Tests.PlayMode
             }
             finally
             {
+                MoveToCleanupScene();
                 DestroyIdeaZooRuntimeRoots();
             }
         }
@@ -84,6 +87,13 @@ namespace IdeaZoo.Tests.PlayMode
         {
             return Resources.FindObjectsOfTypeAll(type).OfType<Component>()
                 .Count(component => component != null && component.gameObject.scene.IsValid());
+        }
+
+        private static void MoveToCleanupScene()
+        {
+            var cleanup = SceneManager.GetSceneByName(CleanupSceneName);
+            if (!cleanup.IsValid()) cleanup = SceneManager.CreateScene(CleanupSceneName);
+            SceneManager.SetActiveScene(cleanup);
         }
 
         private static void DestroyIdeaZooRuntimeRoots()

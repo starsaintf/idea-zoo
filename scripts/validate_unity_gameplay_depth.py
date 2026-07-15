@@ -7,11 +7,12 @@ director = ROOT / "unity/Assets/IdeaZoo/Gameplay/GameplayDepthDirector.cs"
 hud = ROOT / "unity/Assets/IdeaZoo/Gameplay/GameplayDepthHud.cs"
 memory = ROOT / "unity/Assets/IdeaZoo/Gameplay/GameplayMemory.cs"
 performance = ROOT / "unity/Assets/IdeaZoo/Gameplay/GameplayPerformanceGovernor.cs"
+resource_safety = ROOT / "unity/Assets/IdeaZoo/Gameplay/GameplayResourceSafety.cs"
 edit_tests = ROOT / "unity/Assets/IdeaZoo/Tests/EditMode/GameplayDepthEditorTests.cs"
 play_tests = ROOT / "unity/Assets/IdeaZoo/Tests/PlayMode/GameplayDepthPlayModeTests.cs"
 doc = ROOT / "unity/GAMEPLAY_DEPTH_PRODUCTION.md"
 
-required = [core, director, hud, memory, performance, edit_tests, play_tests, doc]
+required = [core, director, hud, memory, performance, resource_safety, edit_tests, play_tests, doc]
 missing = [str(path.relative_to(ROOT)) for path in required if not path.exists()]
 if missing:
     raise SystemExit("Missing gameplay-depth files: " + ", ".join(missing))
@@ -22,6 +23,7 @@ director_text = texts[director.name]
 hud_text = texts[hud.name]
 memory_text = texts[memory.name]
 performance_text = texts[performance.name]
+resource_safety_text = texts[resource_safety.name]
 
 checks = {
     "four playable evidence encounters": all(token in core_text for token in (
@@ -43,6 +45,8 @@ checks = {
     "pooled encounter buttons": "ChoicePool" in hud_text and "for (var i = 0; i < 4; i++)" in hud_text,
     "cached compatibility adapter": "GetMethod(\"RecordEvidence\"" in director_text and "GetField(\"_currentTest\"" in director_text,
     "single existing world reused": "_game.World.GetComponent<GameplayMemoryWorldPass>()" in director_text,
+    "bounded reserve protocol": "EnsurePlayable" in resource_safety_text and "GameplayResourceSafety.EnsurePlayable" in hud_text,
+    "reserve protocol coverage": "ReserveProtocolPreventsAResourceSoftLockWithoutGrantingExcessCapacity" in texts[edit_tests.name],
     "adaptive sustained frame protection": all(token in performance_text for token in (
         "_badSamples >= 3", "_goodSamples >= 8", "ReduceNonessentialLoad", "RestoreQuality"
     )),

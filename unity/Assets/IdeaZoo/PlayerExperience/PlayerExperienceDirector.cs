@@ -105,7 +105,9 @@ namespace IdeaZoo.PlayerExperience
 
         public static GameplayEncounterDefinition DecorateEncounter(IdeaProfile profile, GameplayEncounterDefinition definition)
         {
-            return PlayerExperienceArchetypeCatalog.Decorate(profile, definition);
+            var decorated = PlayerExperienceArchetypeCatalog.Decorate(profile, definition);
+            var rank = _current != null && _current._service != null ? _current._service.State.Rank : KeeperRank.Apprentice;
+            return PlayerExperienceRankGuidance.Apply(rank, decorated);
         }
 
         public static void RecordTactileOutcome(PlayerExperienceTactileOutcome outcome)
@@ -186,6 +188,11 @@ namespace IdeaZoo.PlayerExperience
         private void BeginTutorial()
         {
             if (!_bound || _beginCase == null || _game == null) return;
+            if (_game.Director.Profile != null && _game.Director.Stage != CaseStage.Complete)
+            {
+                _hud.ShowReaction("The Keeper: Finish or deliberately restart the active case before opening the guided case.");
+                return;
+            }
             try
             {
                 _onboardingShown = false;

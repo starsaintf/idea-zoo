@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "unity/Assets/IdeaZoo/PlayerExperience/**"
+      - "unity/Assets/IdeaZoo/Editor/IdeaZooWebGLBuilder.cs"
       - "unity/Assets/IdeaZoo/Gameplay/GameplayDepthHud.cs"
       - "unity/Assets/IdeaZoo/Gameplay/GameplayDepthDirector.cs"
       - "unity/Assets/IdeaZoo/Tests/EditMode/PlayerExperienceEditorTests.cs"

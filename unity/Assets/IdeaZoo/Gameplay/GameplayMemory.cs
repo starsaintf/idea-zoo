@@ -40,7 +40,8 @@ namespace IdeaZoo.Gameplay
         public string Title = string.Empty;
         public string CreatureName = string.Empty;
         public IdeaClass Class;
-        public Ruling? Ruling;
+        public bool HasRuling;
+        public Ruling Ruling;
         public int StartedAtUnix;
         public int CompletedAtUnix;
         public int TimeRemaining;
@@ -85,9 +86,8 @@ namespace IdeaZoo.Gameplay
         public void Trim()
         {
             if (Cases == null) Cases = new List<GameplayCaseMemory>();
-            const int maximumCases = 20;
-            if (Cases.Count <= maximumCases) return;
-            Cases.RemoveRange(0, Cases.Count - maximumCases);
+            if (Cases.Count <= GameplayPerformanceGovernor.MaximumSavedCases) return;
+            Cases.RemoveRange(0, Cases.Count - GameplayPerformanceGovernor.MaximumSavedCases);
         }
     }
 
@@ -99,7 +99,6 @@ namespace IdeaZoo.Gameplay
         private GameplayCaseMemory _active;
 
         public GameplayMemoryState State { get { return _state; } }
-        public GameplayCaseMemory ActiveCase { get { return _active; } }
 
         public GameplayMemoryService()
         {
@@ -108,33 +107,26 @@ namespace IdeaZoo.Gameplay
             _state = Load();
         }
 
-        public GameplayCaseMemory BeginCase(IdeaProfile profile, GameplayResourceState resources)
+        public void BeginCase(IdeaProfile profile, GameplayResourceState resources)
         {
-            if (profile == null) return null;
-            var existing = _state.Cases.FirstOrDefault(item => item.RecordId == profile.RecordId);
-            if (existing != null)
+            if (profile == null) return;
+            _active = _state.Cases.FirstOrDefault(item => item.RecordId == profile.RecordId);
+            if (_active == null)
             {
-                _active = existing;
-                return existing;
+                _active = new GameplayCaseMemory
+                {
+                    RecordId = profile.RecordId,
+                    Title = profile.Title,
+                    CreatureName = profile.CreatureName,
+                    Class = profile.Class,
+                    StartedAtUnix = Now(),
+                    KeeperReflection = Reflection(_state.DominantTendency())
+                };
+                _state.Cases.Add(_active);
+                _state.Trim();
             }
-
-            _active = new GameplayCaseMemory
-            {
-                RecordId = profile.RecordId,
-                Title = profile.Title,
-                CreatureName = profile.CreatureName,
-                Class = profile.Class,
-                StartedAtUnix = Now(),
-                TimeRemaining = resources != null ? resources.Time : 0,
-                TrustRemaining = resources != null ? resources.Trust : 0,
-                MomentumRemaining = resources != null ? resources.Momentum : 0,
-                EvidenceCollected = resources != null ? resources.Evidence : 0,
-                KeeperReflection = Reflection(_state.DominantTendency())
-            };
-            _state.Cases.Add(_active);
-            _state.Trim();
+            UpdateResources(resources);
             Save();
-            return _active;
         }
 
         public void RecordEncounter(GameplayEncounterRun run, GameplayResourceState resources)
@@ -174,11 +166,12 @@ namespace IdeaZoo.Gameplay
         public void CompleteCase(IdeaProfile profile, GameplayResourceState resources)
         {
             if (_active == null || profile == null) return;
-            _active.Ruling = profile.FinalRuling;
+            _active.HasRuling = profile.FinalRuling.HasValue;
+            _active.Ruling = profile.FinalRuling ?? Core.Ruling.Hibernate;
             _active.CompletedAtUnix = Now();
             UpdateResources(resources);
             BuildScars(_active, profile);
-            _active.KeeperReflection = ClosingReflection(_state.DominantTendency(), profile.FinalRuling ?? Core.Ruling.Hibernate);
+            _active.KeeperReflection = Reflection(_state.DominantTendency()) + " This time you chose " + _active.Ruling + ".";
             _state.CompletedCases++;
             Save();
             _active = null;
@@ -186,8 +179,7 @@ namespace IdeaZoo.Gameplay
 
         public string OpeningReflection()
         {
-            if (_state.CompletedCases == 0) return "The Keeper has no history with you yet.";
-            return Reflection(_state.DominantTendency());
+            return _state.CompletedCases == 0 ? "The Keeper has no history with you yet." : Reflection(_state.DominantTendency());
         }
 
         public string Summary()
@@ -200,10 +192,10 @@ namespace IdeaZoo.Gameplay
             try
             {
                 if (!File.Exists(_path)) return NewState();
-                var state = JsonUtility.FromJson<GameplayMemoryState>(File.ReadAllText(_path));
-                if (state == null) return NewState();
-                state.Trim();
-                return state;
+                var loaded = JsonUtility.FromJson<GameplayMemoryState>(File.ReadAllText(_path));
+                if (loaded == null) return NewState();
+                loaded.Trim();
+                return loaded;
             }
             catch
             {
@@ -222,7 +214,6 @@ namespace IdeaZoo.Gameplay
 
         private void Save()
         {
-            if (_state == null) return;
             _state.Trim();
             _state.UpdatedAtUnix = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             var directory = Path.GetDirectoryName(_path);
@@ -264,11 +255,6 @@ namespace IdeaZoo.Gameplay
             return "The Keeper remembers that you challenge claims before granting them a body.";
         }
 
-        private static string ClosingReflection(GameplayTendency tendency, Core.Ruling ruling)
-        {
-            return Reflection(tendency) + " This time you chose " + ruling + ".";
-        }
-
         private static GameplayMemoryState NewState()
         {
             var state = new GameplayMemoryState();
@@ -279,37 +265,34 @@ namespace IdeaZoo.Gameplay
 
         private static int Now()
         {
-            return (int)Mathf.Clamp(DateTimeOffset.UtcNow.ToUnixTimeSeconds(), 0L, int.MaxValue);
+            var value = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            return (int)Math.Min(int.MaxValue, Math.Max(0L, value));
         }
     }
 
     [DisallowMultipleComponent]
     public sealed class GameplayMemoryWorldPass : MonoBehaviour
     {
-        private const int MaximumVisibleMemories = 12;
-        private readonly List<GameObject> _cards = new List<GameObject>(MaximumVisibleMemories);
-        private readonly List<TextMesh> _labels = new List<TextMesh>(MaximumVisibleMemories);
+        private readonly List<GameObject> _cards = new List<GameObject>(GameplayPerformanceGovernor.MaximumVisibleMemoryCards);
+        private readonly List<TextMesh> _labels = new List<TextMesh>(GameplayPerformanceGovernor.MaximumVisibleMemoryCards);
         private Transform _root;
         private Transform _archive;
 
         public void Build(WhisperGateWorld world)
         {
-            if (world == null) return;
-            if (_root == null)
-            {
-                _root = new GameObject("GAMEPLAY_MEMORY_ARCHIVE").transform;
-                _root.SetParent(world.transform, false);
-                _archive = Find(world.transform, "03_CENTRAL_ARCHIVE_WALK") ?? world.transform;
-                for (var i = 0; i < MaximumVisibleMemories; i++) CreateCard(i);
-            }
+            if (world == null || _root != null) return;
+            _root = new GameObject("GAMEPLAY_MEMORY_ARCHIVE").transform;
+            _root.SetParent(world.transform, false);
+            _archive = Find(world.transform, "03_CENTRAL_ARCHIVE_WALK") ?? world.transform;
+            for (var i = 0; i < GameplayPerformanceGovernor.MaximumVisibleMemoryCards; i++) CreateCard(i);
         }
 
         public void Refresh(GameplayMemoryState state)
         {
             if (_root == null || state == null) return;
-            var count = Mathf.Min(MaximumVisibleMemories, state.Cases.Count);
+            var count = Mathf.Min(GameplayPerformanceGovernor.MaximumVisibleMemoryCards, state.Cases.Count);
             var start = Mathf.Max(0, state.Cases.Count - count);
-            for (var i = 0; i < MaximumVisibleMemories; i++)
+            for (var i = 0; i < _cards.Count; i++)
             {
                 var active = i < count;
                 _cards[i].SetActive(active);
@@ -317,12 +300,11 @@ namespace IdeaZoo.Gameplay
                 var memory = state.Cases[start + i];
                 var card = _cards[i].transform;
                 card.position = _archive.TransformPoint(new Vector3(i % 2 == 0 ? -3.6f : 3.6f, 1.0f + (i % 4) * 0.58f, -7.2f + (i / 2) * 1.15f));
-                var ruling = memory.Ruling.HasValue ? memory.Ruling.Value.ToString().ToUpperInvariant() : "ACTIVE";
+                var ruling = memory.HasRuling ? memory.Ruling.ToString().ToUpperInvariant() : "ACTIVE";
                 _labels[i].text = memory.CreatureName + "\n" + ruling + " · " + memory.Tests.Count + " TESTS";
-                var renderer = _cards[i].GetComponent<Renderer>();
-                renderer.sharedMaterial = Presentation.CivicMaterialLibrary.Get(
-                    memory.Ruling == Core.Ruling.Build ? Presentation.CivicSurface.TealGlow :
-                    memory.Ruling == Core.Ruling.Break ? Presentation.CivicSurface.Rust :
+                _cards[i].GetComponent<Renderer>().sharedMaterial = Presentation.CivicMaterialLibrary.Get(
+                    memory.HasRuling && memory.Ruling == Core.Ruling.Build ? Presentation.CivicSurface.TealGlow :
+                    memory.HasRuling && memory.Ruling == Core.Ruling.Break ? Presentation.CivicSurface.Rust :
                     Presentation.CivicSurface.Paper);
             }
         }

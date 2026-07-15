@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using IdeaZoo.Runtime;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -47,8 +48,13 @@ namespace IdeaZoo.Gameplay
             scaler.referenceResolution = new Vector2(896f, 414f);
             scaler.matchWidthOrHeight = 0.5f;
 
-            BuildStatus(canvasObject.transform);
-            BuildOverlay(canvasObject.transform);
+            var safeObject = new GameObject("GameplayDepthSafeArea", typeof(RectTransform));
+            safeObject.transform.SetParent(canvasObject.transform, false);
+            Stretch(safeObject.GetComponent<RectTransform>());
+            safeObject.AddComponent<SafeAreaFitter>();
+
+            BuildStatus(safeObject.transform);
+            BuildOverlay(safeObject.transform);
             _overlay.SetActive(false);
         }
 

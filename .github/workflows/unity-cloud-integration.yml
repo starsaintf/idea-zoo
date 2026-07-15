@@ -146,10 +146,10 @@ jobs:
           targetPlatform: WebGL
           buildsPath: build
           buildName: IdeaZooWebGL
+          buildMethod: IdeaZoo.EditorTools.IdeaZooWebGLBuilder.Build
           versioning: Semantic
           allowDirtyBuild: true
           dockerMemoryLimit: 12g
-          customParameters: -logFile /github/workspace/unity-webgl.log
 
       - name: Upload WebGL diagnostics
         if: always()
@@ -157,7 +157,7 @@ jobs:
         with:
           name: idea-zoo-webgl-diagnostics
           path: |
-            unity-webgl.log
+            unity/unity-webgl-report.txt
             unity/Logs
             unity/Library/Bee/artifacts/WebGL
             build

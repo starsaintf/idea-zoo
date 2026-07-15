@@ -138,6 +138,7 @@ jobs:
             unity/Assets/IdeaZoo/Scenes/Hero_EvidenceForge.unity
 
       - name: Build WebGL player
+        id: webglBuild
         uses: game-ci/unity-builder@v4
         with:
           projectPath: unity
@@ -148,6 +149,19 @@ jobs:
           versioning: Semantic
           allowDirtyBuild: true
           dockerMemoryLimit: 12g
+          customParameters: -logFile /github/workspace/unity-webgl.log
+
+      - name: Upload WebGL diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: idea-zoo-webgl-diagnostics
+          path: |
+            unity-webgl.log
+            unity/Logs
+            unity/Library/Bee/artifacts/WebGL
+            build
+          if-no-files-found: warn
 
       - name: Upload WebGL build
         uses: actions/upload-artifact@v4

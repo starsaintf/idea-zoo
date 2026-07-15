@@ -1,0 +1,68 @@
+name: Deploy Idea Zoo WebGL to Pages
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/deploy-webgl-pages.yml"
+
+permissions:
+  contents: read
+  actions: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download verified WebGL build
+        uses: actions/download-artifact@v4
+        with:
+          name: idea-zoo-unity-webgl
+          path: site
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: 29356981776
+
+      - name: Prepare Unity build for static hosting
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT="site/IdeaZooWebGL"
+          test -f "$ROOT/index.html"
+          gzip -dk "$ROOT/Build/IdeaZooWebGL.data.gz"
+          gzip -dk "$ROOT/Build/IdeaZooWebGL.framework.js.gz"
+          gzip -dk "$ROOT/Build/IdeaZooWebGL.wasm.gz"
+          rm "$ROOT/Build/IdeaZooWebGL.data.gz" \
+             "$ROOT/Build/IdeaZooWebGL.framework.js.gz" \
+             "$ROOT/Build/IdeaZooWebGL.wasm.gz"
+          sed -i \
+            -e 's/Unity Web Player | unity/The Idea Zoo — Browser Playtest/' \
+            -e 's/IdeaZooWebGL.data.gz/IdeaZooWebGL.data/' \
+            -e 's/IdeaZooWebGL.framework.js.gz/IdeaZooWebGL.framework.js/' \
+            -e 's/IdeaZooWebGL.wasm.gz/IdeaZooWebGL.wasm/' \
+            -e 's/companyName: "DefaultCompany"/companyName: "Idea Zoo"/' \
+            -e 's/productName: "unity"/productName: "The Idea Zoo"/' \
+            -e 's/<div id="unity-build-title">unity<\/div>/<div id="unity-build-title">The Idea Zoo<\/div>/' \
+            "$ROOT/index.html"
+          touch "$ROOT/.nojekyll"
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site/IdeaZooWebGL
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5

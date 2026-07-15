@@ -9,7 +9,7 @@ memory = ROOT / "unity/Assets/IdeaZoo/Gameplay/GameplayMemory.cs"
 performance = ROOT / "unity/Assets/IdeaZoo/Gameplay/GameplayPerformanceGovernor.cs"
 resource_safety = ROOT / "unity/Assets/IdeaZoo/Gameplay/GameplayResourceSafety.cs"
 edit_tests = ROOT / "unity/Assets/IdeaZoo/Tests/EditMode/GameplayDepthEditorTests.cs"
-play_tests = ROOT / "unity/Assets/IdeaZoo/Tests/PlayMode/GameplayDepthPlayModeTests.cs"
+play_tests = ROOT / "unity/Assets/IdeaZoo/Tests/PlayMode/IdeaZooCloudPlayModeTests.cs"
 doc = ROOT / "unity/GAMEPLAY_DEPTH_PRODUCTION.md"
 
 required = [core, director, hud, memory, performance, resource_safety, edit_tests, play_tests, doc]
@@ -24,6 +24,7 @@ hud_text = texts[hud.name]
 memory_text = texts[memory.name]
 performance_text = texts[performance.name]
 resource_safety_text = texts[resource_safety.name]
+play_text = texts[play_tests.name]
 
 checks = {
     "four playable evidence encounters": all(token in core_text for token in (
@@ -56,7 +57,10 @@ checks = {
     "mobile governor ownership respected": "QualitySettings.shadowDistance" not in performance_text and "if (!Application.isMobilePlatform)" in performance_text,
     "mobile target fallback retained": "MobileTargetFps = 30" in performance_text,
     "editor coverage": "EveryEvidenceHabitatIsPlayableAndBounded" in texts[edit_tests.name],
-    "playmode ownership coverage": "GameplayDepthBootsOnceAndReusesTheExistingWorld" in texts[play_tests.name],
+    "single full-runtime playmode boot": "WhisperGateBootsCompleteRuntime" in play_text,
+    "playmode gameplay ownership coverage": all(token in play_text for token in (
+        "GameplayDepthDirector", "GameplayMemoryWorldPass", "MaximumVisibleMemoryCards", "GameplayDepthSafeArea"
+    )),
 }
 
 failed = [name for name, passed in checks.items() if not passed]

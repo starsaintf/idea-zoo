@@ -20,26 +20,41 @@ namespace IdeaZoo.Tests.PlayMode
             Component campaignDirector = null;
             Component intelligenceDirector = null;
             Component mobileDirector = null;
+            Component heroDirector = null;
+            Component heroWorldPass = null;
+            Component heroCreaturePass = null;
             var gameType = Type.GetType("IdeaZoo.Runtime.IdeaZooGame, Assembly-CSharp");
             var characterType = Type.GetType("IdeaZoo.Characters.CharacterProductionDirector, Assembly-CSharp");
             var campaignType = Type.GetType("IdeaZoo.Story.CampaignDirector, Assembly-CSharp");
             var intelligenceType = Type.GetType("IdeaZoo.Intelligence.IdeaIntelligenceRuntimeDirector, Assembly-CSharp");
             var mobileType = Type.GetType("IdeaZoo.Mobile.MobileProductionDirector, Assembly-CSharp");
+            var heroDirectorType = Type.GetType("IdeaZoo.HeroSlice.CinematicHeroSliceDirector, Assembly-CSharp");
+            var heroWorldType = Type.GetType("IdeaZoo.HeroSlice.HeroWorldProductionPass, Assembly-CSharp");
+            var heroCreatureType = Type.GetType("IdeaZoo.HeroSlice.HeroCreatureTransformationDirector, Assembly-CSharp");
+            var cameraRigType = Type.GetType("IdeaZoo.Presentation.PresentationCameraRig, Assembly-CSharp");
 
             Assert.NotNull(gameType, "IdeaZooGame type was not imported.");
             Assert.NotNull(characterType, "Character production type was not imported.");
             Assert.NotNull(campaignType, "Campaign production type was not imported.");
             Assert.NotNull(intelligenceType, "Idea Lab intelligence type was not imported.");
             Assert.NotNull(mobileType, "Mobile production type was not imported.");
+            Assert.NotNull(heroDirectorType, "Cinematic hero-slice director type was not imported.");
+            Assert.NotNull(heroWorldType, "Hero world pass type was not imported.");
+            Assert.NotNull(heroCreatureType, "Hero creature transformation type was not imported.");
+            Assert.NotNull(cameraRigType, "Presentation camera rig type was not imported.");
 
-            for (var frame = 0; frame < 480; frame++)
+            for (var frame = 0; frame < 600; frame++)
             {
                 game = FindSceneComponent(gameType);
                 characterDirector = FindAnyComponent(characterType);
                 campaignDirector = FindAnyComponent(campaignType);
                 intelligenceDirector = FindAnyComponent(intelligenceType);
                 mobileDirector = FindAnyComponent(mobileType);
-                if (game != null && characterDirector != null && campaignDirector != null && intelligenceDirector != null && mobileDirector != null) break;
+                heroDirector = FindAnyComponent(heroDirectorType);
+                heroWorldPass = FindAnyComponent(heroWorldType);
+                heroCreaturePass = FindAnyComponent(heroCreatureType);
+                if (game != null && characterDirector != null && campaignDirector != null && intelligenceDirector != null
+                    && mobileDirector != null && heroDirector != null && heroWorldPass != null && heroCreaturePass != null) break;
                 yield return null;
             }
 
@@ -48,6 +63,9 @@ namespace IdeaZoo.Tests.PlayMode
             Assert.NotNull(campaignDirector, "Campaign director did not boot.");
             Assert.NotNull(intelligenceDirector, "Idea Lab intelligence director did not boot.");
             Assert.NotNull(mobileDirector, "Mobile production director did not boot.");
+            Assert.NotNull(heroDirector, "Cinematic hero-slice director did not boot.");
+            Assert.NotNull(heroWorldPass, "Hero world production pass did not boot.");
+            Assert.NotNull(heroCreaturePass, "Hero creature transformation pass did not boot.");
 
             var worldProperty = gameType.GetProperty("World");
             var keeperProperty = gameType.GetProperty("Keeper");
@@ -73,7 +91,8 @@ namespace IdeaZoo.Tests.PlayMode
                 var authored = FindChild(world.transform, "AUTHORED_ENVIRONMENT_KIT");
                 var productionKeeper = FindChild(keeper.transform, "PRODUCTION_KEEPER_VISUAL");
                 var creatureRig = creature.GetComponent(Type.GetType("IdeaZoo.Creatures.CreatureProductionRig, Assembly-CSharp"));
-                if (specialists >= 6 && jury != null && authored != null && productionKeeper != null && creatureRig != null) break;
+                var heroRoot = FindChild(world.transform, "HERO_SLICE_WORLD");
+                if (specialists >= 6 && jury != null && authored != null && productionKeeper != null && creatureRig != null && heroRoot != null) break;
                 yield return null;
             }
 
@@ -86,6 +105,14 @@ namespace IdeaZoo.Tests.PlayMode
             Assert.NotNull(FindChild(world.transform, "AUTHORED_ENVIRONMENT_KIT"), "Authored environment kit did not boot.");
             Assert.NotNull(FindChild(world.transform, "CHILDRENS_JURY"), "Children's Jury did not enter the institution.");
             Assert.NotNull(FindChild(keeper.transform, "PRODUCTION_KEEPER_VISUAL"), "Production Keeper customization did not boot.");
+
+            var heroRootTransform = FindChild(world.transform, "HERO_SLICE_WORLD");
+            Assert.NotNull(heroRootTransform, "Hero-slice world root did not boot.");
+            Assert.NotNull(FindChild(heroRootTransform, "HERO_ZOOENTRANCE"), "Hero Zoo Entrance is missing.");
+            Assert.NotNull(FindChild(heroRootTransform, "HERO_LANTERNFIELDS"), "Hero Lantern Fields is missing.");
+            Assert.NotNull(FindChild(heroRootTransform, "HERO_SILENTSTACKS"), "Hero Silent Stacks is missing.");
+            Assert.NotNull(FindChild(heroRootTransform, "HERO_EVIDENCEFORGE"), "Hero Evidence Forge is missing.");
+            Assert.AreEqual(1, CountAnyComponents(cameraRigType), "More than one presentation camera rig is active; case cinematics could fight each other.");
 
             var creatureRigType = Type.GetType("IdeaZoo.Creatures.CreatureProductionRig, Assembly-CSharp");
             var lifecycleType = Type.GetType("IdeaZoo.Creatures.CreatureProductionLifecycle, Assembly-CSharp");
@@ -117,6 +144,12 @@ namespace IdeaZoo.Tests.PlayMode
         {
             if (type == null) return null;
             return Resources.FindObjectsOfTypeAll(type).OfType<Component>().FirstOrDefault(component => component != null);
+        }
+
+        private static int CountAnyComponents(Type type)
+        {
+            if (type == null) return 0;
+            return Resources.FindObjectsOfTypeAll(type).OfType<Component>().Count(component => component != null && component.gameObject.scene.IsValid());
         }
 
         private static int CountByTypeName(Transform root, string fullName)

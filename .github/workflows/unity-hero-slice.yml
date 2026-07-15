@@ -1,0 +1,22 @@
+name: Unity cinematic hero slice
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "unity/Assets/IdeaZoo/HeroSlice/**"
+      - "unity/Assets/IdeaZoo/Editor/HeroSlice/**"
+      - "unity/Assets/IdeaZoo/Tests/EditMode/HeroSliceEditorTests.cs"
+      - "unity/Assets/IdeaZoo/Tests/PlayMode/IdeaZooCloudPlayModeTests.cs"
+      - "unity/HERO_SLICE_PRODUCTION.md"
+      - "scripts/validate_unity_hero_slice.py"
+      - ".github/workflows/unity-hero-slice.yml"
+      - ".github/workflows/unity-cloud-integration.yml"
+
+jobs:
+  source-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate cinematic hero-slice production contract
+        run: python scripts/validate_unity_hero_slice.py

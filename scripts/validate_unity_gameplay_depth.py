@@ -46,6 +46,7 @@ checks = {
     "safe-area touch protection": "GameplayDepthSafeArea" in hud_text and "SafeAreaFitter" in hud_text,
     "cached compatibility adapter": "GetMethod(\"RecordEvidence\"" in director_text and "GetField(\"_currentTest\"" in director_text,
     "single existing world reused": "_game.World.GetComponent<GameplayMemoryWorldPass>()" in director_text,
+    "unfinished encounter transaction rollback": "_encounterResourceCheckpoint" in director_text and "_resources = _encounterResourceCheckpoint.Clone()" in director_text,
     "bounded reserve protocol": "EnsurePlayable" in resource_safety_text and "GameplayResourceSafety.EnsurePlayable" in hud_text,
     "reserve protocol coverage": "ReserveProtocolPreventsAResourceSoftLockWithoutGrantingExcessCapacity" in texts[edit_tests.name],
     "adaptive sustained frame protection": all(token in performance_text for token in (

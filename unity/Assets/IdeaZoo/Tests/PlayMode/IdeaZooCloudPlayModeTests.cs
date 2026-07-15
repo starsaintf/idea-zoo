@@ -26,6 +26,10 @@ namespace IdeaZoo.Tests.PlayMode
             Component gameplayDepth = null;
             Component gameplayMemoryWorld = null;
             Component gameplayGovernor = null;
+            Component playerExperience = null;
+            Component playerExperienceWorld = null;
+            Component playerAccessibility = null;
+
             var gameType = Type.GetType("IdeaZoo.Runtime.IdeaZooGame, Assembly-CSharp");
             var characterType = Type.GetType("IdeaZoo.Characters.CharacterProductionDirector, Assembly-CSharp");
             var campaignType = Type.GetType("IdeaZoo.Story.CampaignDirector, Assembly-CSharp");
@@ -39,6 +43,10 @@ namespace IdeaZoo.Tests.PlayMode
             var gameplayMemoryWorldType = Type.GetType("IdeaZoo.Gameplay.GameplayMemoryWorldPass, Assembly-CSharp");
             var gameplayGovernorType = Type.GetType("IdeaZoo.Gameplay.GameplayPerformanceGovernor, Assembly-CSharp");
             var gameplayHudType = Type.GetType("IdeaZoo.Gameplay.GameplayDepthHud, Assembly-CSharp");
+            var playerExperienceType = Type.GetType("IdeaZoo.PlayerExperience.PlayerExperienceDirector, Assembly-CSharp");
+            var playerExperienceWorldType = Type.GetType("IdeaZoo.PlayerExperience.PlayerExperienceWorldPass, Assembly-CSharp");
+            var playerAccessibilityType = Type.GetType("IdeaZoo.PlayerExperience.PlayerExperienceAccessibilityController, Assembly-CSharp");
+            var playerHudType = Type.GetType("IdeaZoo.PlayerExperience.PlayerExperienceHud, Assembly-CSharp");
 
             Assert.NotNull(gameType, "IdeaZooGame type was not imported.");
             Assert.NotNull(characterType, "Character production type was not imported.");
@@ -53,6 +61,10 @@ namespace IdeaZoo.Tests.PlayMode
             Assert.NotNull(gameplayMemoryWorldType, "Gameplay memory world type was not imported.");
             Assert.NotNull(gameplayGovernorType, "Gameplay performance governor type was not imported.");
             Assert.NotNull(gameplayHudType, "Gameplay depth HUD type was not imported.");
+            Assert.NotNull(playerExperienceType, "Player Experience V1 director type was not imported.");
+            Assert.NotNull(playerExperienceWorldType, "Player Experience consequence world type was not imported.");
+            Assert.NotNull(playerAccessibilityType, "Player Experience accessibility type was not imported.");
+            Assert.NotNull(playerHudType, "Player Experience HUD type was not imported.");
 
             for (var frame = 0; frame < 600; frame++)
             {
@@ -67,9 +79,13 @@ namespace IdeaZoo.Tests.PlayMode
                 gameplayDepth = FindAnyComponent(gameplayDepthType);
                 gameplayMemoryWorld = FindAnyComponent(gameplayMemoryWorldType);
                 gameplayGovernor = FindAnyComponent(gameplayGovernorType);
+                playerExperience = FindAnyComponent(playerExperienceType);
+                playerExperienceWorld = FindAnyComponent(playerExperienceWorldType);
+                playerAccessibility = FindAnyComponent(playerAccessibilityType);
                 if (game != null && characterDirector != null && campaignDirector != null && intelligenceDirector != null
                     && mobileDirector != null && heroDirector != null && heroWorldPass != null && heroCreaturePass != null
-                    && gameplayDepth != null && gameplayMemoryWorld != null && gameplayGovernor != null) break;
+                    && gameplayDepth != null && gameplayMemoryWorld != null && gameplayGovernor != null
+                    && playerExperience != null && playerExperienceWorld != null && playerAccessibility != null) break;
                 yield return null;
             }
 
@@ -84,6 +100,9 @@ namespace IdeaZoo.Tests.PlayMode
             Assert.NotNull(gameplayDepth, "Gameplay depth director did not boot.");
             Assert.NotNull(gameplayMemoryWorld, "Persistent gameplay memory did not attach to the Zoo.");
             Assert.NotNull(gameplayGovernor, "Gameplay performance governor did not boot.");
+            Assert.NotNull(playerExperience, "Player Experience V1 did not boot.");
+            Assert.NotNull(playerExperienceWorld, "Visible consequence world pass did not attach.");
+            Assert.NotNull(playerAccessibility, "Accessibility controller did not boot.");
 
             var worldProperty = gameType.GetProperty("World");
             var keeperProperty = gameType.GetProperty("Keeper");
@@ -111,8 +130,9 @@ namespace IdeaZoo.Tests.PlayMode
                 var creatureRig = creature.GetComponent(Type.GetType("IdeaZoo.Creatures.CreatureProductionRig, Assembly-CSharp"));
                 var heroRoot = FindChild(world.transform, "HERO_SLICE_WORLD");
                 var memoryRoot = FindChild(world.transform, "GAMEPLAY_MEMORY_ARCHIVE");
+                var consequenceRoot = FindChild(world.transform, "PLAYER_EXPERIENCE_CONSEQUENCES");
                 if (specialists >= 6 && jury != null && authored != null && productionKeeper != null
-                    && creatureRig != null && heroRoot != null && memoryRoot != null) break;
+                    && creatureRig != null && heroRoot != null && memoryRoot != null && consequenceRoot != null) break;
                 yield return null;
             }
 
@@ -166,15 +186,34 @@ namespace IdeaZoo.Tests.PlayMode
             Assert.AreEqual(world.gameObject, gameplayMemoryWorld.gameObject, "Gameplay memory created a second world instead of attaching to the existing Zoo.");
             Assert.NotNull(FindChild(world.transform, "GAMEPLAY_MEMORY_ARCHIVE"), "Silent Stacks memory archive did not boot.");
 
+            var experienceBound = playerExperienceType.GetProperty("Bound");
+            var experienceState = playerExperienceType.GetProperty("State");
+            var experienceHud = playerExperienceType.GetProperty("ExperienceHud");
+            Assert.NotNull(experienceBound);
+            Assert.IsTrue((bool)experienceBound.GetValue(playerExperience), "Player Experience V1 did not bind to the live game.");
+            Assert.NotNull(experienceState.GetValue(playerExperience), "Player Experience persistence did not initialize.");
+            Assert.NotNull(experienceHud.GetValue(playerExperience), "Player Experience HUD did not initialize.");
+            Assert.AreEqual(1, CountAnyComponents(playerExperienceType), "More than one Player Experience owner is active.");
+            Assert.AreEqual(world.gameObject, playerExperienceWorld.gameObject, "Player Experience created a second Zoo world.");
+            Assert.NotNull(FindChild(world.transform, "PLAYER_EXPERIENCE_CONSEQUENCES"), "Visible consequence monuments did not boot.");
+
             var maximumCards = (int)gameplayGovernorType.GetField("MaximumVisibleMemoryCards").GetRawConstantValue();
+            var maximumConsequences = (int)playerExperienceWorldType.GetField("MaximumVisibleConsequences").GetRawConstantValue();
             var allTransforms = Resources.FindObjectsOfTypeAll<Transform>();
             var memoryCardCount = allTransforms.Count(item => item != null
                 && item.gameObject.scene.IsValid()
                 && item.name.StartsWith("GameplayMemoryCard_", StringComparison.Ordinal));
-            Assert.AreEqual(maximumCards, memoryCardCount, "Gameplay memory cards were not pooled to the fixed budget.");
-            Assert.IsTrue(allTransforms.Any(item => item != null
+            var consequenceCount = allTransforms.Count(item => item != null
                 && item.gameObject.scene.IsValid()
-                && item.name == "GameplayDepthSafeArea"), "Gameplay HUD is not protected by the shared mobile safe area.");
+                && item.name.StartsWith("PlayerConsequence_", StringComparison.Ordinal));
+            Assert.AreEqual(maximumCards, memoryCardCount, "Gameplay memory cards were not pooled to the fixed budget.");
+            Assert.AreEqual(maximumConsequences, consequenceCount, "Visible consequences were not pooled to the fixed budget.");
+            Assert.IsTrue(allTransforms.Any(item => item != null && item.gameObject.scene.IsValid() && item.name == "GameplayDepthSafeArea"),
+                "Gameplay HUD is not protected by the shared mobile safe area.");
+            Assert.IsTrue(allTransforms.Any(item => item != null && item.gameObject.scene.IsValid() && item.name == "PlayerExperienceSafeArea"),
+                "Player Experience HUD is not protected by the shared mobile safe area.");
+            Assert.IsTrue(allTransforms.Any(item => item != null && item.gameObject.scene.IsValid() && item.name == "TactileTokenPool"),
+                "Tactile encounter preparation did not boot.");
         }
 
         private static Component FindSceneComponent(Type type)

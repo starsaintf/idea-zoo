@@ -43,6 +43,7 @@ checks = {
     "bounded save history": "MaximumSavedCases" in memory_text and "RemoveRange" in memory_text,
     "pooled archive cards": "GameplayMemoryCard_" in memory_text and "MaximumVisibleMemoryCards" in memory_text,
     "pooled encounter buttons": "ChoicePool" in hud_text and "for (var i = 0; i < 4; i++)" in hud_text,
+    "safe-area touch protection": "GameplayDepthSafeArea" in hud_text and "SafeAreaFitter" in hud_text,
     "cached compatibility adapter": "GetMethod(\"RecordEvidence\"" in director_text and "GetField(\"_currentTest\"" in director_text,
     "single existing world reused": "_game.World.GetComponent<GameplayMemoryWorldPass>()" in director_text,
     "bounded reserve protocol": "EnsurePlayable" in resource_safety_text and "GameplayResourceSafety.EnsurePlayable" in hud_text,

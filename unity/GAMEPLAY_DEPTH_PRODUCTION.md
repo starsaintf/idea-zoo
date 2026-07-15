@@ -77,6 +77,7 @@ The implementation keeps speed and visual quality through:
 - state-change-only persistence;
 - no new simulation loop for creatures or districts;
 - no per-frame hierarchy scans or UI rebuilding;
+- the shared safe-area fitter for notches, rounded corners and compact phone screens;
 - active Eco 30, Balanced 45 or Quality 60 target detection rather than overriding the selected tier;
 - one-second frame sampling;
 - quality reduction only after three sustained bad samples;
@@ -96,7 +97,7 @@ The pass adds:
 - disruption repeatability tests;
 - persistence-cap tests;
 - runtime ownership and world-reuse PlayMode coverage;
-- a static allocation, governor-ownership and performance contract;
+- safe-area, allocation, governor-ownership and performance contracts;
 - the existing licensed Unity EditMode, PlayMode and WebGL build pipeline.
 
 Physical iPhone testing remains necessary for sustained heat, battery use, touch comfort and device-specific frame pacing.

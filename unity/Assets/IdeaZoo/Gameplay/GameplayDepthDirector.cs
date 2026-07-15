@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using IdeaZoo.Core;
+using IdeaZoo.PlayerExperience;
 using IdeaZoo.Runtime;
 using UnityEngine;
 
@@ -120,7 +121,11 @@ namespace IdeaZoo.Gameplay
             if (_game.Director.CompletedTests.Contains(testId)) return;
 
             GameplayEncounterDefinition definition;
-            try { definition = GameplayEncounterCatalog.For(testId, _game.Director.Profile); }
+            try
+            {
+                definition = GameplayEncounterCatalog.For(testId, _game.Director.Profile);
+                definition = PlayerExperienceDirector.DecorateEncounter(_game.Director.Profile, definition);
+            }
             catch { return; }
 
             _game.Hud.CloseOverlay();
@@ -189,6 +194,15 @@ namespace IdeaZoo.Gameplay
                 return;
             }
 
+            var profile = _game.Director.Profile;
+            var tactile = _hud.ConsumeTactileOutcome();
+            if (tactile != null)
+            {
+                _resources.Apply(tactile.Impact);
+                ApplyImpact(profile, tactile.Impact);
+                PlayerExperienceDirector.RecordTactileOutcome(tactile);
+            }
+
             _hud.SetStatus(_resources, _memory.Summary(), _performance.StatusLabel);
             if (!_encounter.Complete)
             {
@@ -196,12 +210,11 @@ namespace IdeaZoo.Gameplay
                 return;
             }
 
-            var profile = _game.Director.Profile;
             _encounter.ApplyMetricConsequences(profile);
             _memory.RecordEncounter(_encounter, _resources);
             var testId = _encounter.Definition.TestId;
-            var strength = _encounter.Strength();
-            var note = _encounter.EvidenceNote();
+            var strength = Mathf.Clamp(_encounter.Strength() + (tactile != null && tactile.StrongSelections >= tactile.TotalSelections ? 1 : 0), 0, 3);
+            var note = _encounter.EvidenceNote() + (tactile != null ? " " + tactile.Summary : string.Empty);
             _encounter = null;
             _encounterResourceCheckpoint = null;
             _hud.HideOverlay();

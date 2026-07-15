@@ -48,7 +48,9 @@ namespace IdeaZoo.PlayerExperience
         public static void Pulse()
         {
             if (_current == null || !_current._settings.Haptics || !Application.isMobilePlatform) return;
+#if UNITY_IOS || UNITY_ANDROID
             Handheld.Vibrate();
+#endif
         }
 
         private void RefreshCache()

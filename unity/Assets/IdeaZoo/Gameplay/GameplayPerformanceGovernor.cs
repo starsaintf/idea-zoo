@@ -21,8 +21,7 @@ namespace IdeaZoo.Gameplay
         private int _badSamples;
         private int _goodSamples;
         private bool _reduced;
-        private float _originalShadowDistance;
-        private float _originalLodBias;
+        private float _desktopLodBeforeReduction;
         private int _target;
 
         public string StatusLabel { get; private set; } = "QUALITY · FULL";
@@ -30,12 +29,8 @@ namespace IdeaZoo.Gameplay
 
         public void Begin()
         {
-            _target = Application.isMobilePlatform ? MobileTargetFps : DesktopTargetFps;
-            Application.targetFrameRate = _target;
-            QualitySettings.vSyncCount = 0;
             Time.maximumDeltaTime = 0.10f;
-            _originalShadowDistance = QualitySettings.shadowDistance;
-            _originalLodBias = QualitySettings.lodBias;
+            _target = CurrentTarget();
             _sampleStarted = Time.unscaledTime;
             _frames = 0;
         }
@@ -46,6 +41,7 @@ namespace IdeaZoo.Gameplay
             var elapsed = Time.unscaledTime - _sampleStarted;
             if (elapsed < 1f) return;
 
+            _target = CurrentTarget();
             var sample = _frames / Mathf.Max(0.01f, elapsed);
             SmoothedFps = Mathf.Lerp(SmoothedFps, sample, 0.35f);
             _frames = 0;
@@ -75,8 +71,15 @@ namespace IdeaZoo.Gameplay
         {
             _reduced = true;
             _badSamples = 0;
-            QualitySettings.shadowDistance = Mathf.Max(12f, _originalShadowDistance * 0.65f);
-            QualitySettings.lodBias = Mathf.Max(0.72f, _originalLodBias * 0.82f);
+
+            // MobileQualityController owns render scale, tier, shadows and mobile LOD.
+            // Only desktop/WebGL LOD is adjusted here to avoid competing governors.
+            if (!Application.isMobilePlatform)
+            {
+                _desktopLodBeforeReduction = QualitySettings.lodBias;
+                QualitySettings.lodBias = Mathf.Max(0.72f, _desktopLodBeforeReduction * 0.82f);
+            }
+
             var particles = FindObjectsByType<ParticleSystem>(FindObjectsInactive.Include, FindObjectsSortMode.None);
             for (var i = 0; i < particles.Length; i++)
             {
@@ -86,7 +89,8 @@ namespace IdeaZoo.Gameplay
                 if (!_particleBudgets.ContainsKey(system)) _particleBudgets[system] = main.maxParticles;
                 main.maxParticles = Mathf.Max(8, Mathf.RoundToInt(main.maxParticles * 0.65f));
             }
-            StatusLabel = "QUALITY · ADAPTIVE " + SmoothedFps.ToString("0") + " FPS";
+
+            StatusLabel = "QUALITY · ADAPTIVE " + SmoothedFps.ToString("0") + "/" + _target + " FPS";
             QualityChanged?.Invoke(StatusLabel);
         }
 
@@ -94,8 +98,9 @@ namespace IdeaZoo.Gameplay
         {
             _reduced = false;
             _goodSamples = 0;
-            QualitySettings.shadowDistance = _originalShadowDistance;
-            QualitySettings.lodBias = _originalLodBias;
+            if (!Application.isMobilePlatform && _desktopLodBeforeReduction > 0f)
+                QualitySettings.lodBias = _desktopLodBeforeReduction;
+
             foreach (var pair in _particleBudgets)
             {
                 if (pair.Key == null) continue;
@@ -103,8 +108,15 @@ namespace IdeaZoo.Gameplay
                 main.maxParticles = pair.Value;
             }
             _particleBudgets.Clear();
-            StatusLabel = "QUALITY · FULL " + SmoothedFps.ToString("0") + " FPS";
+
+            StatusLabel = "QUALITY · FULL " + SmoothedFps.ToString("0") + "/" + _target + " FPS";
             QualityChanged?.Invoke(StatusLabel);
+        }
+
+        private static int CurrentTarget()
+        {
+            if (Application.targetFrameRate > 0) return Application.targetFrameRate;
+            return Application.isMobilePlatform ? MobileTargetFps : DesktopTargetFps;
         }
     }
 }

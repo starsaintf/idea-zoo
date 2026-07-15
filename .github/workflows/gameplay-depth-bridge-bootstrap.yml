@@ -1,0 +1,106 @@
+name: Gameplay depth bridge bootstrap
+
+on:
+  push:
+    branches: [gameplay-depth-performance-v1]
+    paths:
+      - ".github/workflows/gameplay-depth-bridge-bootstrap.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  patch-runtime-bridge:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: gameplay-depth-performance-v1
+          fetch-depth: 0
+
+      - name: Add event-driven gameplay bridge and compatibility correction
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+
+          game_path = Path("unity/Assets/IdeaZoo/Runtime/IdeaZooGame.cs")
+          game = game_path.read_text(encoding="utf-8")
+
+          property_marker = "        public IdeaZooHud Hud { get { return _hud; } }\n"
+          bridge = """
+
+        public event Action<IdeaProfile> CaseStarted;
+        public event Action<string> GameplayEncounterRequested;
+        public event Action<string, int, string> EvidenceRecorded;
+        public event Action<IdeaProfile, Ruling> RulingIssued;
+
+        public void SubmitGameplayEvidence(string testId, int strength, string note)
+        {
+            RecordEvidence(testId, strength, note);
+        }
+
+        public void SetGameplayInteractionLock(bool locked)
+        {
+            if (_keeper == null) return;
+            _keeper.SetLocked(locked);
+            if (locked) _keeper.ResetTransientInput();
+        }
+"""
+          if "public event Action<string> GameplayEncounterRequested;" not in game:
+              if property_marker not in game:
+                  raise SystemExit("IdeaZooGame public property marker was not found")
+              game = game.replace(property_marker, property_marker + bridge, 1)
+
+          case_marker = "                _hud.SetObjective(\"TWENTY-FOUR HOURS\", \"Your real idea has taken a body. Learn what it wants before deciding what it deserves.\");\n                StartCoroutine(Hatch(profile));"
+          case_replacement = "                _hud.SetObjective(\"TWENTY-FOUR HOURS\", \"Your real idea has taken a body. Learn what it wants before deciding what it deserves.\");\n                CaseStarted?.Invoke(profile);\n                StartCoroutine(Hatch(profile));"
+          if "CaseStarted?.Invoke(profile);" not in game:
+              if case_marker not in game:
+                  raise SystemExit("IdeaZooGame case-start marker was not found")
+              game = game.replace(case_marker, case_replacement, 1)
+
+          evidence_marker = "            _keeper.SetLocked(true);\n            _keeper.ResetTransientInput();\n            _hud.ShowEvidence(test.Id, test.Title, test.Question, test.Mission);"
+          evidence_replacement = "            _keeper.SetLocked(true);\n            _keeper.ResetTransientInput();\n            if (GameplayEncounterRequested != null)\n            {\n                GameplayEncounterRequested.Invoke(testId);\n                return;\n            }\n            _hud.ShowEvidence(test.Id, test.Title, test.Question, test.Mission);"
+          if "GameplayEncounterRequested.Invoke(testId);" not in game:
+              if evidence_marker not in game:
+                  raise SystemExit("IdeaZooGame evidence-open marker was not found")
+              game = game.replace(evidence_marker, evidence_replacement, 1)
+
+          recorded_marker = "                else _hud.SetObjective(\"EVIDENCE CHANGES THE BODY\", (4 - _director.CompletedTests.Count) + \" tests remain. Look for the next lit habitat.\");\n"
+          recorded_replacement = recorded_marker + "                EvidenceRecorded?.Invoke(testId, strength, note);\n"
+          if "EvidenceRecorded?.Invoke(testId, strength, note);" not in game:
+              if recorded_marker not in game:
+                  raise SystemExit("IdeaZooGame evidence-recorded marker was not found")
+              game = game.replace(recorded_marker, recorded_replacement, 1)
+
+          ruling_marker = "            var ruling = ToRuling(station);\n            _director.IssueRuling(ruling);\n            _keeper.SetLocked(true);"
+          ruling_replacement = "            var ruling = ToRuling(station);\n            _director.IssueRuling(ruling);\n            RulingIssued?.Invoke(_director.Profile, ruling);\n            _keeper.SetLocked(true);"
+          if "RulingIssued?.Invoke(_director.Profile, ruling);" not in game:
+              if ruling_marker not in game:
+                  raise SystemExit("IdeaZooGame ruling marker was not found")
+              game = game.replace(ruling_marker, ruling_replacement, 1)
+
+          game_path.write_text(game, encoding="utf-8")
+
+          memory_path = Path("unity/Assets/IdeaZoo/Gameplay/GameplayMemory.cs")
+          memory = memory_path.read_text(encoding="utf-8")
+          memory = memory.replace(
+              "            return (int)Mathf.Clamp(DateTimeOffset.UtcNow.ToUnixTimeSeconds(), 0L, int.MaxValue);",
+              "            var value = DateTimeOffset.UtcNow.ToUnixTimeSeconds();\n            return (int)Math.Min(int.MaxValue, Math.Max(0L, value));",
+          )
+          memory_path.write_text(memory, encoding="utf-8")
+          PY
+
+      - name: Commit runtime bridge
+        shell: bash
+        run: |
+          if git diff --quiet; then
+            echo "Gameplay bridge is already present."
+            exit 0
+          fi
+          git config user.name "Idea Zoo Gameplay Build"
+          git config user.email "actions@users.noreply.github.com"
+          git add unity/Assets/IdeaZoo/Runtime/IdeaZooGame.cs unity/Assets/IdeaZoo/Gameplay/GameplayMemory.cs
+          git commit -m "feat(gameplay): connect playable encounters to the live case loop"
+          git push origin HEAD:gameplay-depth-performance-v1

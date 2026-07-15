@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using IdeaZoo.PlayerExperience;
 using IdeaZoo.Runtime;
 using UnityEngine;
 using UnityEngine.UI;
@@ -23,6 +24,14 @@ namespace IdeaZoo.Gameplay
         private Text _resourceText;
         private readonly List<Button> _choiceButtons = new List<Button>(4);
         private Button _cancelButton;
+
+        private GameObject _tactilePanel;
+        private Text _tactilePrompt;
+        private readonly List<Button> _tactileButtons = new List<Button>(6);
+        private readonly HashSet<string> _selectedTactileIds = new HashSet<string>(StringComparer.Ordinal);
+        private PlayerExperienceTactileSpec _tactileSpec;
+        private GameplayChoice[] _renderedChoices;
+        private GameplayResourceState _renderedResources;
 
         private static readonly Color Ink = new Color(0.015f, 0.035f, 0.055f, 0.98f);
         private static readonly Color Paper = new Color(0.92f, 0.88f, 0.77f, 1f);
@@ -73,6 +82,7 @@ namespace IdeaZoo.Gameplay
             var previous = string.IsNullOrEmpty(run.LastConsequence) ? reflection : "LAST CONSEQUENCE: " + run.LastConsequence;
             _context.text = run.Definition.Mission + "\n\n" + run.CurrentRound.Context + "\n\n" + previous;
             _feedback.text = string.Empty;
+            RenderTactile(PlayerExperienceTactileCatalog.For(run.Definition.TestId, run.RoundIndex));
             RenderChoices(run.CurrentRound.Choices, resources);
             _resourceText.text = resources.Compact();
             _cancelButton.gameObject.SetActive(true);
@@ -86,9 +96,19 @@ namespace IdeaZoo.Gameplay
             _body.text = disruption.Situation;
             _context.text = "The plan changed. Choose what the creature sacrifices.";
             _feedback.text = string.Empty;
+            RenderTactile(null);
             RenderChoices(disruption.Choices, resources);
             _resourceText.text = resources.Compact();
             _cancelButton.gameObject.SetActive(false);
+        }
+
+        public PlayerExperienceTactileOutcome ConsumeTactileOutcome()
+        {
+            if (_tactileSpec == null) return null;
+            var outcome = PlayerExperienceTactileCatalog.Resolve(_tactileSpec, _selectedTactileIds);
+            _selectedTactileIds.Clear();
+            _tactileSpec = null;
+            return outcome;
         }
 
         public void SetFeedback(string message, bool error)
@@ -101,6 +121,9 @@ namespace IdeaZoo.Gameplay
         public void HideOverlay()
         {
             if (_overlay != null) _overlay.SetActive(false);
+            _selectedTactileIds.Clear();
+            _tactileSpec = null;
+            PlayerExperienceAccessibilityController.SetDecisionFocus(false);
         }
 
         private void BuildStatus(Transform parent)
@@ -136,9 +159,11 @@ namespace IdeaZoo.Gameplay
             _body.verticalOverflow = VerticalWrapMode.Truncate;
 
             _context = Label("EncounterContext", panel.transform, string.Empty, 13, new Color(0.72f, 0.76f, 0.72f), TextAnchor.UpperLeft);
-            SetRect(_context.rectTransform, new Vector2(0.04f, 0.34f), new Vector2(0.45f, 0.62f));
+            SetRect(_context.rectTransform, new Vector2(0.04f, 0.45f), new Vector2(0.45f, 0.62f));
             _context.horizontalOverflow = HorizontalWrapMode.Wrap;
             _context.verticalOverflow = VerticalWrapMode.Truncate;
+
+            BuildTactilePanel(panel.transform);
 
             var choiceRoot = new GameObject("ChoicePool", typeof(RectTransform), typeof(VerticalLayoutGroup));
             choiceRoot.transform.SetParent(panel.transform, false);
@@ -158,19 +183,103 @@ namespace IdeaZoo.Gameplay
             }
 
             _resourceText = Label("EncounterResources", panel.transform, string.Empty, 13, Teal, TextAnchor.MiddleLeft);
-            SetRect(_resourceText.rectTransform, new Vector2(0.04f, 0.17f), new Vector2(0.72f, 0.28f));
+            SetRect(_resourceText.rectTransform, new Vector2(0.04f, 0.10f), new Vector2(0.72f, 0.18f));
             _feedback = Label("EncounterFeedback", panel.transform, string.Empty, 12, Rust, TextAnchor.MiddleLeft);
-            SetRect(_feedback.rectTransform, new Vector2(0.04f, 0.04f), new Vector2(0.72f, 0.17f));
+            SetRect(_feedback.rectTransform, new Vector2(0.04f, 0.02f), new Vector2(0.72f, 0.10f));
 
             _cancelButton = ButtonObject("ReturnToZoo", panel.transform, Muted);
             var cancelRect = _cancelButton.GetComponent<RectTransform>();
-            SetRect(cancelRect, new Vector2(0.75f, 0.04f), new Vector2(0.96f, 0.17f));
+            SetRect(cancelRect, new Vector2(0.75f, 0.02f), new Vector2(0.96f, 0.15f));
             SetButtonText(_cancelButton, "RETURN TO ZOO");
             _cancelButton.onClick.AddListener(delegate { CancelRequested?.Invoke(); });
         }
 
+        private void BuildTactilePanel(Transform parent)
+        {
+            _tactilePanel = Panel("TactilePreparation", parent, new Color(.05f, .08f, .09f, .88f));
+            SetRect(_tactilePanel.GetComponent<RectTransform>(), new Vector2(.04f, .18f), new Vector2(.45f, .45f));
+            _tactilePrompt = Label("TactilePrompt", _tactilePanel.transform, string.Empty, 12, Brass, TextAnchor.UpperLeft);
+            SetRect(_tactilePrompt.rectTransform, new Vector2(.03f, .72f), new Vector2(.97f, .97f));
+            _tactilePrompt.horizontalOverflow = HorizontalWrapMode.Wrap;
+
+            var gridRoot = new GameObject("TactileTokenPool", typeof(RectTransform), typeof(GridLayoutGroup));
+            gridRoot.transform.SetParent(_tactilePanel.transform, false);
+            SetRect(gridRoot.GetComponent<RectTransform>(), new Vector2(.03f, .05f), new Vector2(.97f, .70f));
+            var grid = gridRoot.GetComponent<GridLayoutGroup>();
+            grid.cellSize = new Vector2(154f, 38f);
+            grid.spacing = new Vector2(6f, 6f);
+            grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+            grid.constraintCount = 2;
+
+            for (var i = 0; i < 6; i++)
+            {
+                var captured = i;
+                var button = ButtonObject("TactileToken_" + i, gridRoot.transform, Muted);
+                button.GetComponent<LayoutElement>().minHeight = 38f;
+                button.onClick.AddListener(delegate { ToggleTactile(captured); });
+                _tactileButtons.Add(button);
+            }
+            _tactilePanel.SetActive(false);
+        }
+
+        private void RenderTactile(PlayerExperienceTactileSpec spec)
+        {
+            _selectedTactileIds.Clear();
+            _tactileSpec = spec;
+            _tactilePanel.SetActive(spec != null);
+            if (spec == null) return;
+            _tactilePrompt.text = spec.Prompt + "  ·  " + spec.RequiredSelections + " required";
+            for (var i = 0; i < _tactileButtons.Count; i++)
+            {
+                var active = i < spec.Tokens.Length;
+                var button = _tactileButtons[i];
+                button.gameObject.SetActive(active);
+                if (!active) continue;
+                SetButtonText(button, spec.Tokens[i].Label);
+                SetTactileButtonColor(button, false);
+            }
+        }
+
+        private void ToggleTactile(int index)
+        {
+            if (_tactileSpec == null || index < 0 || index >= _tactileSpec.Tokens.Length) return;
+            var token = _tactileSpec.Tokens[index];
+            if (_selectedTactileIds.Contains(token.Id)) _selectedTactileIds.Remove(token.Id);
+            else
+            {
+                if (_selectedTactileIds.Count >= _tactileSpec.RequiredSelections)
+                {
+                    _feedback.text = "Remove one preparation token before selecting another.";
+                    _feedback.color = Brass;
+                    return;
+                }
+                _selectedTactileIds.Add(token.Id);
+            }
+            SetTactileButtonColor(_tactileButtons[index], _selectedTactileIds.Contains(token.Id));
+            _feedback.text = TactileReady() ? "Preparation complete. Make the decision." : _selectedTactileIds.Count + "/" + _tactileSpec.RequiredSelections + " preparation tokens selected.";
+            _feedback.color = TactileReady() ? Teal : Brass;
+            RefreshChoiceInteractability();
+        }
+
+        private void SetTactileButtonColor(Button button, bool selected)
+        {
+            var colors = button.colors;
+            colors.normalColor = selected ? Brass : Muted;
+            colors.highlightedColor = selected ? Teal : Brass;
+            colors.pressedColor = Teal;
+            button.colors = colors;
+            button.GetComponent<Image>().color = selected ? Brass : Muted;
+        }
+
+        private bool TactileReady()
+        {
+            return _tactileSpec == null || _selectedTactileIds.Count >= _tactileSpec.RequiredSelections;
+        }
+
         private void RenderChoices(GameplayChoice[] choices, GameplayResourceState resources)
         {
+            _renderedChoices = choices;
+            _renderedResources = resources;
             var reserveUsed = GameplayResourceSafety.EnsurePlayable(choices, resources);
             if (reserveUsed)
             {
@@ -185,11 +294,23 @@ namespace IdeaZoo.Gameplay
                 button.gameObject.SetActive(active);
                 if (!active) continue;
                 var choice = choices[i];
-                var affordable = resources.CanApply(choice.Impact);
-                button.interactable = affordable;
                 SetButtonText(button, choice.Label + "\n" + Cost(choice.Impact));
+            }
+            RefreshChoiceInteractability();
+        }
+
+        private void RefreshChoiceInteractability()
+        {
+            for (var i = 0; i < _choiceButtons.Count; i++)
+            {
+                var active = _renderedChoices != null && i < _renderedChoices.Length;
+                var button = _choiceButtons[i];
+                if (!active || !button.gameObject.activeSelf) continue;
+                var choice = _renderedChoices[i];
+                var affordable = _renderedResources != null && _renderedResources.CanApply(choice.Impact);
+                button.interactable = affordable && TactileReady();
                 var colors = button.colors;
-                colors.normalColor = affordable ? Teal : Muted;
+                colors.normalColor = affordable && TactileReady() ? Teal : Muted;
                 colors.highlightedColor = Brass;
                 colors.pressedColor = new Color(0.15f, 0.55f, 0.52f, 1f);
                 colors.disabledColor = new Color(0.11f, 0.14f, 0.16f, 0.72f);
@@ -201,6 +322,7 @@ namespace IdeaZoo.Gameplay
         {
             _overlay.SetActive(true);
             _overlay.transform.SetAsLastSibling();
+            PlayerExperienceAccessibilityController.SetDecisionFocus(true);
         }
 
         private Button ButtonObject(string name, Transform parent, Color normal)

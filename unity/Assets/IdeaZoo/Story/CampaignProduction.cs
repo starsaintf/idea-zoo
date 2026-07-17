@@ -258,7 +258,8 @@ namespace IdeaZoo.Story
             else if (ending == CampaignEnding.Release) { State.PublicTrust += 14; State.CityStability -= 12; }
             else if (ending == CampaignEnding.MoltTheZoo) { State.ZooIntegrity += 8; State.CityStability += 6; }
             else if (ending == CampaignEnding.Sanctuary) { State.CityStability += 12; State.StoryLeakage -= 8; }
-            else { State.ZooIntegrity = 0; State.StoryLeakage += 18; }
+            else if (ending == CampaignEnding.Destruction) { State.ZooIntegrity = 0; State.StoryLeakage += 18; }
+            else throw new ArgumentOutOfRangeException(nameof(ending), ending, "Unknown campaign ending.");
             ClampMetrics();
             Persist();
             return ending;

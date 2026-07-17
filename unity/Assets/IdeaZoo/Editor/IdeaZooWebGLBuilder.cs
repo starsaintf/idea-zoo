@@ -50,12 +50,15 @@ namespace IdeaZoo.EditorTools
                     options = BuildOptions.None
                 };
 
-                var report = BuildPipeline.BuildPlayer(options);
-                AppendReport(log, report);
-                File.WriteAllText(reportPath, log.ToString());
+                using (WebGLGraphicsProfile.Activate(log))
+                {
+                    var report = BuildPipeline.BuildPlayer(options);
+                    AppendReport(log, report);
+                    File.WriteAllText(reportPath, log.ToString());
 
-                if (report == null || report.summary.result != BuildResult.Succeeded)
-                    throw new InvalidOperationException("WebGL build failed. See unity-webgl-report.txt.");
+                    if (report == null || report.summary.result != BuildResult.Succeeded)
+                        throw new InvalidOperationException("WebGL build failed. See unity-webgl-report.txt.");
+                }
             }
             catch (Exception exception)
             {

@@ -79,7 +79,25 @@ namespace IdeaZoo.Characters
             _baseScale = transform.localScale;
             _headBase = _head != null ? _head.localRotation : Quaternion.identity;
             _lastPosition = transform.position;
+            ResetPerformance();
             ApplyAnimatorEmotion();
+        }
+
+        public void ResetPerformance()
+        {
+            _gesture = CharacterGesture.None;
+            _gestureUntil = 0f;
+            _speed = 0f;
+            _lastPosition = transform.position;
+            transform.localScale = _baseScale;
+            if (_head != null) _head.localRotation = _headBase;
+        }
+
+        private void Reset()
+        {
+            _baseScale = transform.localScale;
+            _lastPosition = transform.position;
+            _gesture = CharacterGesture.None;
         }
 
         public void SetEmotion(CharacterEmotion emotion)

@@ -55,6 +55,9 @@ jobs:
             "$ROOT/index.html"
           touch "$ROOT/.nojekyll"
 
+      - name: Verify playable WebGL publish contract
+        run: python scripts/validate_webgl_publish_contract.py site/IdeaZooWebGL
+
       - name: Publish verified build branch
         id: publish
         shell: bash

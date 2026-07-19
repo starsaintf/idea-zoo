@@ -60,6 +60,9 @@ jobs:
             "$ROOT/index.html"
           touch "$ROOT/.nojekyll"
 
+      - name: Verify playable WebGL publish contract
+        run: python scripts/validate_webgl_publish_contract.py site/IdeaZooWebGL
+
       - name: Configure and enable GitHub Pages
         uses: actions/configure-pages@v5
         with:

@@ -6,14 +6,14 @@ import sys
 
 REQUIRED_FILES = (
     "Build/IdeaZooWebGL.loader.js",
-    "Build/IdeaZooWebGL.data.gz",
-    "Build/IdeaZooWebGL.framework.js.gz",
-    "Build/IdeaZooWebGL.wasm.gz",
+    "Build/IdeaZooWebGL.data",
+    "Build/IdeaZooWebGL.framework.js",
+    "Build/IdeaZooWebGL.wasm",
 )
 REQUIRED_CONFIG = (
-    'dataUrl: buildUrl + "/IdeaZooWebGL.data.gz"',
-    'frameworkUrl: buildUrl + "/IdeaZooWebGL.framework.js.gz"',
-    'codeUrl: buildUrl + "/IdeaZooWebGL.wasm.gz"',
+    'dataUrl: buildUrl + "/IdeaZooWebGL.data"',
+    'frameworkUrl: buildUrl + "/IdeaZooWebGL.framework.js"',
+    'codeUrl: buildUrl + "/IdeaZooWebGL.wasm"',
 )
 
 

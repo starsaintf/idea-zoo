@@ -43,9 +43,17 @@ jobs:
           set -euo pipefail
           ROOT="site/IdeaZooWebGL"
           test -f "$ROOT/index.html"
+          gzip -dk "$ROOT/Build/IdeaZooWebGL.data.gz"
+          gzip -dk "$ROOT/Build/IdeaZooWebGL.framework.js.gz"
+          gzip -dk "$ROOT/Build/IdeaZooWebGL.wasm.gz"
+          rm "$ROOT/Build/IdeaZooWebGL.data.gz" \
+             "$ROOT/Build/IdeaZooWebGL.framework.js.gz" \
+             "$ROOT/Build/IdeaZooWebGL.wasm.gz"
           sed -i \
             -e 's/Unity Web Player | unity/The Idea Zoo — Browser Playtest/' \
-            -e 's/decompressionFallback: false/decompressionFallback: "Gzip"/' \
+            -e 's/IdeaZooWebGL.data.gz/IdeaZooWebGL.data/' \
+            -e 's/IdeaZooWebGL.framework.js.gz/IdeaZooWebGL.framework.js/' \
+            -e 's/IdeaZooWebGL.wasm.gz/IdeaZooWebGL.wasm/' \
             -e 's/companyName: "DefaultCompany"/companyName: "Idea Zoo"/' \
             -e 's/productName: "unity"/productName: "The Idea Zoo"/' \
             -e 's/<div id="unity-build-title">unity<\/div>/<div id="unity-build-title">The Idea Zoo<\/div>/' \

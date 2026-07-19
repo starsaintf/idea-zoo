@@ -70,7 +70,7 @@ jobs:
           name: unity-cloud-license-blocker
           path: unity-cloud-blocked.md
 
-  integrate-and-build:
+  integrate-and-test:
     needs: license-preflight
     if: needs.license-preflight.outputs.ready == 'true'
     runs-on: ubuntu-latest
@@ -85,13 +85,13 @@ jobs:
           fetch-depth: 0
           lfs: true
 
-      - name: Cache imported Unity Library
+      - name: Cache editor-test Unity Library
         uses: actions/cache@v4
         with:
           path: unity/Library
-          key: unity-6000.5.0f1-${{ runner.os }}-${{ hashFiles('unity/Assets/**', 'unity/Packages/**', 'unity/ProjectSettings/**') }}
+          key: unity-editor-tests-6000.5.0f1-${{ runner.os }}-${{ hashFiles('unity/Assets/**', 'unity/Packages/**', 'unity/ProjectSettings/**') }}
           restore-keys: |
-            unity-6000.5.0f1-${{ runner.os }}-
+            unity-editor-tests-6000.5.0f1-${{ runner.os }}-
 
       - name: Import project, run EditMode and PlayMode tests
         id: unityTests
@@ -137,7 +137,28 @@ jobs:
             unity/Assets/IdeaZoo/Scenes/Hero_SilentStacks.unity
             unity/Assets/IdeaZoo/Scenes/Hero_EvidenceForge.unity
 
-      - name: Build WebGL player
+  webgl-build:
+    needs: [license-preflight, integrate-and-test]
+    if: needs.license-preflight.outputs.ready == 'true' && needs.integrate-and-test.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+      UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+      UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          lfs: true
+
+      - name: Guarantee a clean WebGL import
+        run: |
+          rm -rf unity/Library unity/Temp unity/obj build/WebGL
+          mkdir -p build/WebGL
+
+      - name: Build WebGL player from a clean target environment
+        id: webglBuild
         uses: game-ci/unity-builder@v4
         with:
           projectPath: unity
@@ -145,9 +166,22 @@ jobs:
           targetPlatform: WebGL
           buildsPath: build
           buildName: IdeaZooWebGL
+          buildMethod: IdeaZoo.EditorTools.IdeaZooWebGLBuilder.Build
           versioning: Semantic
           allowDirtyBuild: true
           dockerMemoryLimit: 12g
+
+      - name: Upload WebGL diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: idea-zoo-webgl-diagnostics
+          path: |
+            unity/unity-webgl-report.txt
+            unity/Logs
+            unity/Library/Bee/artifacts/WebGL
+            build
+          if-no-files-found: warn
 
       - name: Upload WebGL build
         uses: actions/upload-artifact@v4

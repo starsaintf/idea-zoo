@@ -2,10 +2,15 @@ name: Publish Idea Zoo browser playtest
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - ".github/workflows/publish-webgl-playtest.yml"
+    inputs:
+      source_run_id:
+        description: "Successful Unity cloud integration workflow run ID"
+        required: true
+        type: string
+      source_head_sha:
+        description: "Commit SHA built by the source workflow"
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -25,7 +30,7 @@ jobs:
           name: idea-zoo-unity-webgl
           path: site
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          run-id: 29356981776
+          run-id: ${{ inputs.source_run_id }}
 
       - name: Prepare Unity build for static hosting
         shell: bash
@@ -49,6 +54,9 @@ jobs:
             -e 's/<div id="unity-build-title">unity<\/div>/<div id="unity-build-title">The Idea Zoo<\/div>/' \
             "$ROOT/index.html"
           touch "$ROOT/.nojekyll"
+
+      - name: Verify playable WebGL publish contract
+        run: python scripts/validate_webgl_publish_contract.py site/IdeaZooWebGL
 
       - name: Publish verified build branch
         id: publish
@@ -74,8 +82,8 @@ jobs:
         env:
           PUBLISH_OUTCOME: ${{ steps.publish.outcome }}
           PUBLISHED_SHA: ${{ steps.publish.outputs.published_sha }}
-          SOURCE_RUN_ID: "29356981776"
-          SOURCE_HEAD_SHA: "494b46a0942e09b3e20e4de264e35ef032334985"
+          SOURCE_RUN_ID: ${{ inputs.source_run_id }}
+          SOURCE_HEAD_SHA: ${{ inputs.source_head_sha }}
         with:
           script: |
             const path = 'deployment-status/webgl-playtest.json';

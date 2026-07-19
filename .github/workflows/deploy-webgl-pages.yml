@@ -2,10 +2,15 @@ name: Deploy Idea Zoo WebGL to Pages
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - ".github/workflows/deploy-webgl-pages.yml"
+    inputs:
+      source_run_id:
+        description: "Successful Unity cloud integration workflow run ID"
+        required: true
+        type: string
+      source_head_sha:
+        description: "Commit SHA built by the source workflow"
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -30,7 +35,7 @@ jobs:
           name: idea-zoo-unity-webgl
           path: site
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          run-id: 29356981776
+          run-id: ${{ inputs.source_run_id }}
 
       - name: Prepare Unity build for static hosting
         shell: bash
@@ -55,6 +60,9 @@ jobs:
             "$ROOT/index.html"
           touch "$ROOT/.nojekyll"
 
+      - name: Verify playable WebGL publish contract
+        run: python scripts/validate_webgl_publish_contract.py site/IdeaZooWebGL
+
       - name: Configure and enable GitHub Pages
         uses: actions/configure-pages@v5
         with:
@@ -75,8 +83,8 @@ jobs:
         env:
           DEPLOY_OUTCOME: ${{ steps.deployment.outcome }}
           PAGE_URL: ${{ steps.deployment.outputs.page_url }}
-          SOURCE_RUN_ID: "29356981776"
-          SOURCE_HEAD_SHA: "494b46a0942e09b3e20e4de264e35ef032334985"
+          SOURCE_RUN_ID: ${{ inputs.source_run_id }}
+          SOURCE_HEAD_SHA: ${{ inputs.source_head_sha }}
         with:
           script: |
             const path = 'deployment-status/webgl-pages.json';

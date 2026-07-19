@@ -248,9 +248,37 @@ namespace IdeaZoo.Creatures
             for (var i = 0; i < count; i++)
             {
                 var angle = i * Mathf.PI * 2f / count;
-                var surface = profile.Appetite == Appetite.Money ? CivicSurface.Brass : profile.Appetite == Appetite.Obedience ? CivicSurface.Rust : profile.Appetite == Appetite.Care ? CivicSurface.Moss : CivicSurface.TealGlow;
-                var mark = Part(root, profile.Appetite + "Mark_" + i, profile.Appetite == Appetite.Data ? PrimitiveType.Cube : PrimitiveType.Sphere, new Vector3(Mathf.Cos(angle) * 0.24f, Mathf.Sin(angle) * 0.18f, 0f), Vector3.one * 0.14f, surface).transform;
+                var surface = AppetiteSurface(profile.Appetite);
+                var mark = Part(root, profile.Appetite + "Mark_" + i, AppetiteMarkShape(profile.Appetite), new Vector3(Mathf.Cos(angle) * 0.24f, Mathf.Sin(angle) * 0.18f, 0f), Vector3.one * 0.14f, surface).transform;
                 _animated.Add(mark);
+            }
+        }
+
+        private static CivicSurface AppetiteSurface(Appetite appetite)
+        {
+            switch (appetite)
+            {
+                case Appetite.Attention: return CivicSurface.TealGlow;
+                case Appetite.Data: return CivicSurface.Glass;
+                case Appetite.Money: return CivicSurface.Brass;
+                case Appetite.Trust: return CivicSurface.Paper;
+                case Appetite.Obedience: return CivicSurface.Rust;
+                case Appetite.Labour: return CivicSurface.Clay;
+                case Appetite.Care: return CivicSurface.Moss;
+                case Appetite.Time: return CivicSurface.Paper;
+                default: return CivicSurface.TealGlow;
+            }
+        }
+
+        private static PrimitiveType AppetiteMarkShape(Appetite appetite)
+        {
+            switch (appetite)
+            {
+                case Appetite.Data: return PrimitiveType.Cube;
+                case Appetite.Money: return PrimitiveType.Cylinder;
+                case Appetite.Labour: return PrimitiveType.Capsule;
+                case Appetite.Time: return PrimitiveType.Cylinder;
+                default: return PrimitiveType.Sphere;
             }
         }
 

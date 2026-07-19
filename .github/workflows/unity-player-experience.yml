@@ -1,0 +1,23 @@
+name: Unity player experience V1
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "unity/Assets/IdeaZoo/PlayerExperience/**"
+      - "unity/Assets/IdeaZoo/Editor/IdeaZooWebGLBuilder.cs"
+      - "unity/Assets/IdeaZoo/Gameplay/GameplayDepthHud.cs"
+      - "unity/Assets/IdeaZoo/Gameplay/GameplayDepthDirector.cs"
+      - "unity/Assets/IdeaZoo/Tests/EditMode/PlayerExperienceEditorTests.cs"
+      - "unity/Assets/IdeaZoo/Tests/PlayMode/IdeaZooCloudPlayModeTests.cs"
+      - "unity/PLAYER_EXPERIENCE_V1.md"
+      - "scripts/validate_unity_player_experience.py"
+      - ".github/workflows/unity-player-experience.yml"
+
+jobs:
+  source-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate onboarding, archetypes, tactile play, accessibility and performance boundaries
+        run: python scripts/validate_unity_player_experience.py

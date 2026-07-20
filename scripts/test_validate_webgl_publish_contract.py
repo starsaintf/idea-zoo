@@ -7,6 +7,10 @@ import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 VALIDATOR = ROOT / "scripts" / "validate_webgl_publish_contract.py"
+WEBGL_PUBLISH_WORKFLOWS = (
+    ROOT / ".github" / "workflows" / "deploy-webgl-pages.yml",
+    ROOT / ".github" / "workflows" / "publish-webgl-playtest.yml",
+)
 
 
 class WebglPublishContractTests(unittest.TestCase):
@@ -33,6 +37,15 @@ class WebglPublishContractTests(unittest.TestCase):
             result = subprocess.run([sys.executable, str(VALIDATOR), str(root)], capture_output=True, text=True)
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("IdeaZooWebGL.wasm", result.stderr)
+
+    def test_webgl_publication_workflows_check_out_the_validator_before_running_it(self):
+        for workflow_path in WEBGL_PUBLISH_WORKFLOWS:
+            workflow = workflow_path.read_text(encoding="utf-8")
+            checkout = workflow.find("uses: actions/checkout@v4")
+            validator = workflow.find("python scripts/validate_webgl_publish_contract.py")
+
+            self.assertGreaterEqual(checkout, 0, f"{workflow_path.name} must check out the validator script")
+            self.assertLess(checkout, validator, f"{workflow_path.name} must check out before the validator runs")
 
 
 if __name__ == "__main__":

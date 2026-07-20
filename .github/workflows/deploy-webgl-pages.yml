@@ -29,6 +29,12 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
+      - name: Check out the verified build contract
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.source_head_sha }}
+          fetch-depth: 1
+
       - name: Download verified WebGL build
         uses: actions/download-artifact@v4
         with:

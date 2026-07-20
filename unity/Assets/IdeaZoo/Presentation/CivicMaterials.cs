@@ -26,8 +26,15 @@ namespace IdeaZoo.Presentation
             Material existing;
             if (Materials.TryGetValue(surface, out existing) && existing != null) return existing;
 
-            var shader = Shader.Find("Universal Render Pipeline/Lit");
+            // WebGL's build pipeline strips dynamically-found shaders unless they
+            // are part of the player. The Resources asset is deliberately the first
+            // choice, so the live game never relies on a project-level "always
+            // included shaders" setting to create its world at startup.
+            var shader = Resources.Load<Shader>("IdeaZooLit");
+            if (shader == null) shader = Shader.Find("IdeaZoo/RuntimeLit");
+            if (shader == null) shader = Shader.Find("Universal Render Pipeline/Lit");
             if (shader == null) shader = Shader.Find("Standard");
+            if (shader == null) throw new InvalidOperationException("Idea Zoo could not load its runtime material shader.");
             var material = new Material(shader) { name = "IZ_" + surface };
             var color = SurfaceColor(surface);
 

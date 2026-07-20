@@ -4,7 +4,7 @@ name: Unity cloud integration
 on:
   workflow_dispatch:
   push:
-    branches: [unity-production-v1]
+    branches: [main, unity-production-v1]
     paths:
       - "unity/**"
       - ".github/workflows/unity-cloud-integration.yml"
@@ -84,6 +84,9 @@ jobs:
         with:
           fetch-depth: 0
           lfs: true
+
+      - name: Verify WebGL runtime-rendering contract
+        run: python -m unittest scripts.test_webgl_shader_contract
 
       - name: Cache editor-test Unity Library
         uses: actions/cache@v4

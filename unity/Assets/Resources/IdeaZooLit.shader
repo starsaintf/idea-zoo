@@ -90,7 +90,11 @@ Shader "IdeaZoo/RuntimeLit"
                 half lightAttenuation = mainLight.distanceAttenuation * mainLight.shadowAttenuation;
                 half diffuseTerm = saturate(dot(normalWS, mainLight.direction));
 
-                half3 ambient = SampleSH(normalWS);
+                // Procedural scenes have no baked probes. WebGL may therefore
+                // return black spherical harmonics even though RenderSettings
+                // has an ambient palette. Preserve readable silhouettes while
+                // directional and practical lights provide the final contrast.
+                half3 ambient = max(SampleSH(normalWS), half3(0.32h, 0.38h, 0.42h));
                 half3 diffuse = baseSample.rgb * (ambient + mainLight.color * diffuseTerm * lightAttenuation);
 
                 half3 halfDirection = SafeNormalize(mainLight.direction + viewDirectionWS);

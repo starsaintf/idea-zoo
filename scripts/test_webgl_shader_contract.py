@@ -50,6 +50,13 @@ class WebGlShaderContractTests(unittest.TestCase):
         self.assertIn('normalOS : NORMAL', self.shader)
         self.assertNotIn('return tex2D(_BaseMap, input.uv) * _BaseColor;', self.shader)
 
+    def test_procedural_world_keeps_a_webgl_visibility_floor(self):
+        self.assertIn(
+            'max(SampleSH(normalWS), half3(0.32h, 0.38h, 0.42h))',
+            self.shader,
+            "Procedural WebGL scenes have no baked probes and must not render black",
+        )
+
     def test_glass_can_disable_depth_writes(self):
         self.assertIn('material.SetFloat("_ZWrite", 0f)', self.materials)
         self.assertIn('material.renderQueue = 3000', self.materials)

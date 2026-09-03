@@ -276,8 +276,11 @@ namespace IdeaZoo.Runtime
 
         internal static Material ActorMaterial(Color color)
         {
-            var shader = Shader.Find("Universal Render Pipeline/Lit");
+            var shader = Resources.Load<Shader>("IdeaZooLit");
+            if (shader == null) shader = Shader.Find("IdeaZoo/RuntimeLit");
+            if (shader == null) shader = Shader.Find("Universal Render Pipeline/Lit");
             if (shader == null) shader = Shader.Find("Standard");
+            if (shader == null) throw new InvalidOperationException("Idea Zoo could not load its actor material shader.");
             return new Material(shader) { color = color };
         }
     }

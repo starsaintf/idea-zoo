@@ -5,6 +5,13 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 MATERIALS = ROOT / "unity" / "Assets" / "IdeaZoo" / "Presentation" / "CivicMaterials.cs"
 SHADER = ROOT / "unity" / "Assets" / "Resources" / "IdeaZooLit.shader"
+RUNTIME_MATERIAL_FACTORIES = (
+    ROOT / "unity" / "Assets" / "IdeaZoo" / "HeroSlice" / "HeroSliceCore.cs",
+    ROOT / "unity" / "Assets" / "IdeaZoo" / "Presentation" / "ProceduralSpecialist.cs",
+    ROOT / "unity" / "Assets" / "IdeaZoo" / "Runtime" / "IdeaZooActors.cs",
+    ROOT / "unity" / "Assets" / "IdeaZoo" / "Characters" / "CharacterProduction.cs",
+    ROOT / "unity" / "Assets" / "IdeaZoo" / "Runtime" / "IdeaZooWorld.cs",
+)
 
 
 class WebGlShaderContractTests(unittest.TestCase):
@@ -47,6 +54,15 @@ class WebGlShaderContractTests(unittest.TestCase):
         self.assertIn('material.SetFloat("_ZWrite", 0f)', self.materials)
         self.assertIn('material.renderQueue = 3000', self.materials)
         self.assertIn('ZWrite [_ZWrite]', self.shader)
+
+    def test_every_runtime_material_factory_uses_the_resources_shader(self):
+        for path in RUNTIME_MATERIAL_FACTORIES:
+            source = path.read_text(encoding="utf-8")
+            self.assertIn(
+                'Resources.Load<Shader>("IdeaZooLit")',
+                source,
+                f"{path.name} can create a null Material in stripped WebGL builds",
+            )
 
 
 if __name__ == "__main__":

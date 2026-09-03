@@ -161,7 +161,10 @@ namespace IdeaZoo.HeroSlice
             Material material;
             if (Materials.TryGetValue(cacheKey, out material) && material != null) return material;
 
-            var shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
+            var shader = Resources.Load<Shader>("IdeaZooLit")
+                         ?? Shader.Find("IdeaZoo/RuntimeLit")
+                         ?? Shader.Find("Universal Render Pipeline/Lit")
+                         ?? Shader.Find("Standard");
             if (shader == null) throw new InvalidOperationException("Idea Zoo could not locate a supported lit shader.");
             material = new Material(shader) { name = "IZ_Hero_Surface_" + cacheKey };
             if (material.HasProperty("_BaseColor")) material.SetColor("_BaseColor", color);

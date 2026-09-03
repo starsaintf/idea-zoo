@@ -260,7 +260,11 @@ namespace IdeaZoo.Characters
             var collider = node.GetComponent<Collider>();
             if (collider != null) UnityEngine.Object.Destroy(collider);
             var renderer = node.GetComponent<Renderer>();
-            var shader = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
+            var shader = Resources.Load<Shader>("IdeaZooLit")
+                         ?? Shader.Find("IdeaZoo/RuntimeLit")
+                         ?? Shader.Find("Universal Render Pipeline/Lit")
+                         ?? Shader.Find("Standard");
+            if (shader == null) throw new InvalidOperationException("Idea Zoo could not load its character material shader.");
             var material = new Material(shader) { name = "IZ_Character_" + name };
             if (material.HasProperty("_BaseColor")) material.SetColor("_BaseColor", color);
             if (material.HasProperty("_Color")) material.SetColor("_Color", color);

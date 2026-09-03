@@ -220,7 +220,11 @@ namespace IdeaZoo.Runtime
         public void CloseOverlay()
         {
             _overlay.SetActive(false);
-            _touchRoot.SetActive(Application.isMobilePlatform || Input.touchSupported);
+            // Desktop Chromium frequently reports touch support on machines that
+            // are actually being played with a mouse and keyboard. Treat the
+            // platform as authoritative so WebGL does not cover the world with
+            // mobile controls merely because a touch digitizer exists.
+            _touchRoot.SetActive(Application.isMobilePlatform);
             _submitLocked = false;
             Joystick.ResetInput();
             LensChanged?.Invoke(false);
@@ -268,7 +272,7 @@ namespace IdeaZoo.Runtime
         {
             _touchRoot = UiObject("TouchControls", _safeRoot.transform);
             Stretch(_touchRoot.GetComponent<RectTransform>());
-            _touchRoot.SetActive(Application.isMobilePlatform || Input.touchSupported);
+            _touchRoot.SetActive(Application.isMobilePlatform);
 
             var joystickObject = UiObject("Joystick", _touchRoot.transform);
             Joystick = joystickObject.AddComponent<MobileJoystick>();

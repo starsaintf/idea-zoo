@@ -12,6 +12,8 @@ RUNTIME_MATERIAL_FACTORIES = (
     ROOT / "unity" / "Assets" / "IdeaZoo" / "Characters" / "CharacterProduction.cs",
     ROOT / "unity" / "Assets" / "IdeaZoo" / "Runtime" / "IdeaZooWorld.cs",
 )
+HUD = ROOT / "unity" / "Assets" / "IdeaZoo" / "Runtime" / "IdeaZooHud.cs"
+GAME = ROOT / "unity" / "Assets" / "IdeaZoo" / "Runtime" / "IdeaZooGame.cs"
 
 
 class WebGlShaderContractTests(unittest.TestCase):
@@ -70,6 +72,15 @@ class WebGlShaderContractTests(unittest.TestCase):
                 source,
                 f"{path.name} can create a null Material in stripped WebGL builds",
             )
+
+    def test_desktop_webgl_uses_keyboard_controls_and_explains_them(self):
+        hud = HUD.read_text(encoding="utf-8")
+        game = GAME.read_text(encoding="utf-8")
+        self.assertIn("_touchRoot.SetActive(Application.isMobilePlatform);", hud)
+        self.assertNotIn("Application.isMobilePlatform || Input.touchSupported", hud)
+        self.assertIn("WASD MOVE", game)
+        self.assertIn("RIGHT-DRAG LOOK", game)
+        self.assertIn("E INTERACT", game)
 
 
 if __name__ == "__main__":

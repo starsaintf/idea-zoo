@@ -82,7 +82,10 @@ namespace IdeaZoo.Runtime
                 return;
             }
 
-            if (_nearest == null) _hud.SetPrompt("HOLD LENS · SEE WHAT THE IDEA HIDES");
+            if (_nearest == null)
+                _hud.SetPrompt(Application.isMobilePlatform
+                    ? "MOVE WITH THE LEFT STICK · DRAG TO LOOK · HOLD LENS"
+                    : "WASD MOVE · RIGHT-DRAG LOOK · E INTERACT · HOLD SPACE FOR LENS");
             else if (_nearest.Kind == StationKind.Board) _hud.SetPrompt("TOUCH · OPEN THE SEALED CLASSIFICATION");
             else if (_nearest.Kind == StationKind.Molt) _hud.SetPrompt("TOUCH · EDIT THE REAL IDEA");
             else _hud.SetPrompt("TOUCH · RUN " + _nearest.DisplayName);

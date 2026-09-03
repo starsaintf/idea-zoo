@@ -191,8 +191,11 @@ namespace IdeaZoo.Presentation
 
         private static Material MaterialFor(Color color)
         {
-            var shader = Shader.Find("Universal Render Pipeline/Lit");
+            var shader = Resources.Load<Shader>("IdeaZooLit");
+            if (shader == null) shader = Shader.Find("IdeaZoo/RuntimeLit");
+            if (shader == null) shader = Shader.Find("Universal Render Pipeline/Lit");
             if (shader == null) shader = Shader.Find("Standard");
+            if (shader == null) throw new System.InvalidOperationException("Idea Zoo could not load its specialist material shader.");
             var material = new Material(shader);
             if (material.HasProperty("_BaseColor")) material.SetColor("_BaseColor", color);
             if (material.HasProperty("_Color")) material.SetColor("_Color", color);

@@ -503,8 +503,11 @@ namespace IdeaZoo.Runtime
         {
             Material material;
             if (_materials.TryGetValue(key, out material)) return material;
-            var shader = Shader.Find("Universal Render Pipeline/Lit");
+            var shader = Resources.Load<Shader>("IdeaZooLit");
+            if (shader == null) shader = Shader.Find("IdeaZoo/RuntimeLit");
+            if (shader == null) shader = Shader.Find("Universal Render Pipeline/Lit");
             if (shader == null) shader = Shader.Find("Standard");
+            if (shader == null) throw new InvalidOperationException("Idea Zoo could not load its world material shader.");
             material = new Material(shader) { name = "IdeaZoo_" + key, color = color };
             if (color.a < 0.99f)
             {

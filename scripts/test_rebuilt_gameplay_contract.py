@@ -34,6 +34,10 @@ class RebuiltGameplayContractTests(unittest.TestCase):
         self.assertIn('Resources.Load<Shader>("IdeaZooLit")', self.source)
         self.assertIn('Shader.Find("IdeaZoo/RuntimeLit")', self.source)
 
+    def test_unity_six_uses_the_supported_builtin_font(self):
+        self.assertIn('Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf")', self.source)
+        self.assertNotIn('GetBuiltinResource<Font>("Arial.ttf")', self.source)
+
 
 if __name__ == "__main__":
     unittest.main()

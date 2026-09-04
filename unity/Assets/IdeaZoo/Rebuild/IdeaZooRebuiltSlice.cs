@@ -339,7 +339,7 @@ namespace IdeaZoo.Rebuild
             rect.anchoredPosition = position;
             rect.sizeDelta = dimensions;
             var text = node.GetComponent<Text>();
-            text.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+            text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
             text.fontSize = size;
             text.fontStyle = style;
             text.color = color;

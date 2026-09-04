@@ -55,15 +55,7 @@ jobs:
           rm "$ROOT/Build/IdeaZooWebGL.data.gz" \
              "$ROOT/Build/IdeaZooWebGL.framework.js.gz" \
              "$ROOT/Build/IdeaZooWebGL.wasm.gz"
-          sed -i \
-            -e 's/Unity Web Player | unity/The Idea Zoo — Browser Playtest/' \
-            -e 's/IdeaZooWebGL.data.gz/IdeaZooWebGL.data/' \
-            -e 's/IdeaZooWebGL.framework.js.gz/IdeaZooWebGL.framework.js/' \
-            -e 's/IdeaZooWebGL.wasm.gz/IdeaZooWebGL.wasm/' \
-            -e 's/companyName: "DefaultCompany"/companyName: "Idea Zoo"/' \
-            -e 's/productName: "unity"/productName: "The Idea Zoo"/' \
-            -e 's/<div id="unity-build-title">unity<\/div>/<div id="unity-build-title">The Idea Zoo<\/div>/' \
-            "$ROOT/index.html"
+          python scripts/prepare_webgl_pages.py "$ROOT/index.html"
           touch "$ROOT/.nojekyll"
 
       - name: Verify playable WebGL publish contract

@@ -12,6 +12,8 @@ RUNTIME_MATERIAL_FACTORIES = (
     ROOT / "unity" / "Assets" / "IdeaZoo" / "Characters" / "CharacterProduction.cs",
     ROOT / "unity" / "Assets" / "IdeaZoo" / "Runtime" / "IdeaZooWorld.cs",
 )
+HUD = ROOT / "unity" / "Assets" / "IdeaZoo" / "Runtime" / "IdeaZooHud.cs"
+GAME = ROOT / "unity" / "Assets" / "IdeaZoo" / "Runtime" / "IdeaZooGame.cs"
 
 
 class WebGlShaderContractTests(unittest.TestCase):
@@ -50,6 +52,13 @@ class WebGlShaderContractTests(unittest.TestCase):
         self.assertIn('normalOS : NORMAL', self.shader)
         self.assertNotIn('return tex2D(_BaseMap, input.uv) * _BaseColor;', self.shader)
 
+    def test_procedural_world_keeps_a_webgl_visibility_floor(self):
+        self.assertIn(
+            'max(SampleSH(normalWS), half3(0.32h, 0.38h, 0.42h))',
+            self.shader,
+            "Procedural WebGL scenes have no baked probes and must not render black",
+        )
+
     def test_glass_can_disable_depth_writes(self):
         self.assertIn('material.SetFloat("_ZWrite", 0f)', self.materials)
         self.assertIn('material.renderQueue = 3000', self.materials)
@@ -63,6 +72,15 @@ class WebGlShaderContractTests(unittest.TestCase):
                 source,
                 f"{path.name} can create a null Material in stripped WebGL builds",
             )
+
+    def test_desktop_webgl_uses_keyboard_controls_and_explains_them(self):
+        hud = HUD.read_text(encoding="utf-8")
+        game = GAME.read_text(encoding="utf-8")
+        self.assertIn("_touchRoot.SetActive(Application.isMobilePlatform);", hud)
+        self.assertNotIn("Application.isMobilePlatform || Input.touchSupported", hud)
+        self.assertIn("WASD MOVE", game)
+        self.assertIn("RIGHT-DRAG LOOK", game)
+        self.assertIn("E INTERACT", game)
 
 
 if __name__ == "__main__":

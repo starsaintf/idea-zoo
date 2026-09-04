@@ -29,10 +29,10 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - name: Check out the verified build contract
+      - name: Check out the current publishing contract
         uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.source_head_sha }}
+          ref: main
           fetch-depth: 1
 
       - name: Download verified WebGL build
@@ -43,7 +43,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ inputs.source_run_id }}
 
-      - name: Prepare Unity build for static hosting
+      - name: Prepare verified Unity build for static hosting
         shell: bash
         run: |
           set -euo pipefail

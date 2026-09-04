@@ -7,7 +7,7 @@ import sys
 
 RESPONSIVE_STYLE = """<style id="idea-zoo-responsive-shell">
 html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: #030709; }
-#unity-container.unity-desktop { position: fixed; inset: 0; width: 100%; height: 100%; transform: none; }
+#unity-container.unity-desktop { position: fixed; inset: 0; width: 100%; height: 100%; transform: none !important; }
 #unity-canvas { display: block; width: 100% !important; height: 100% !important; background: #030709; }
 #unity-footer { position: absolute; z-index: 2; right: 0; bottom: 0; left: 0; height: 38px; padding: 0 12px; box-sizing: border-box; background: rgba(3, 7, 9, .82); }
 #unity-warning { position: absolute; z-index: 4; top: 8px; left: 50%; transform: translateX(-50%); }

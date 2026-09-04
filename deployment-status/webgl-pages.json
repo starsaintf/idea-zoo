@@ -1,9 +1,9 @@
 {
-  "deployed": true,
-  "outcome": "success",
-  "pageUrl": "https://starsaintf.github.io/idea-zoo/",
-  "sourceRunId": "33718450414",
-  "sourceHeadSha": "07110094fe0aa0fd3c110f509ce8cda6b3fec6a3",
-  "workflowRunId": "33816942164",
-  "recordedAt": "2026-09-03T23:17:49.473Z"
+  "deployed": false,
+  "outcome": "skipped",
+  "pageUrl": "",
+  "sourceRunId": "33818288545",
+  "sourceHeadSha": "ea058793e709520a402216978550d509c44024be",
+  "workflowRunId": "33839330524",
+  "recordedAt": "2026-09-04T05:08:11.281Z"
 }

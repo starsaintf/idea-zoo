@@ -25,7 +25,7 @@ class PrepareWebglPagesTests(unittest.TestCase):
 
             self.assertIn('id="idea-zoo-responsive-shell"', result)
             self.assertEqual(1, result.count('id="idea-zoo-responsive-shell"'))
-            self.assertIn("#unity-container.unity-desktop { position: fixed; inset: 0; width: 100%; height: 100%; }", result)
+            self.assertIn("#unity-container.unity-desktop { position: fixed; inset: 0; width: 100%; height: 100%; transform: none; }", result)
             self.assertIn("#unity-canvas { display: block; width: 100% !important; height: 100% !important;", result)
             self.assertNotIn("IdeaZooWebGL.data.gz", result)
             self.assertIn("The Idea Zoo — Browser Playtest", result)
